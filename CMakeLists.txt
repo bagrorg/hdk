@@ -157,7 +157,7 @@ if(ENABLE_COST_MODEL)
   find_package(dbench REQUIRED)
   find_package(Armadillo REQUIRED)
   message(STATUS "Cost Model enabled ${dbench_DIR}")
-  add_definitions("-DENABLE_COST_MODEL")
+  add_definitions("-DHAVE_COST_MODEL")
 endif()
 
 option(ENABLE_L0 "Enable level zero support" OFF)

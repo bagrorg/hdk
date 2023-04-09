@@ -31,6 +31,12 @@
 #include "Shared/sqldefs.h"
 #include "Shared/toString.h"
 
+#ifdef HAVE_COST_MODEL
+
+#include "CostModel/Measurements.h"
+
+#endif
+
 #include <boost/graph/adjacency_list.hpp>
 
 #include <list>
@@ -141,6 +147,10 @@ struct RelAlgExecutionUnit {
   TableIdToNodeMap table_id_to_node_map{};
   // empty if not a UNION, true if UNION ALL, false if regular UNION
   const std::optional<bool> union_all;
+
+#ifdef HAVE_COST_MODEL
+  costmodel::AnalyticalTemplate templ;
+#endif
 };
 
 std::ostream& operator<<(std::ostream& os, const RelAlgExecutionUnit& ra_exe_unit);

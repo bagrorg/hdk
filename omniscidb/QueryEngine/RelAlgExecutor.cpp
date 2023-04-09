@@ -1466,6 +1466,12 @@ RelAlgExecutor::WorkUnit RelAlgExecutor::createWorkUnit(const hdk::ir::Node* nod
 
   target_exprs_owned_ = builder.releaseTargetExprsOwned();
 
+#ifdef HAVE_COST_MODEL
+  if (dynamic_cast<const hdk::ir::Sort*>(node) != nullptr) {
+    rewritten_exe_unit.templ = costmodel::AnalyticalTemplate::Sort;
+  }
+#endif
+
   return {rewritten_exe_unit,
           node,
           builder.maxGroupsBufferEntryGuess(),
