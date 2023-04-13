@@ -1838,22 +1838,18 @@ TemporaryTable Executor::executeWorkUnitImpl(
     DataProvider* data_provider,
     ColumnCacheMap& column_cache) {
   INJECT_TIMER(Exec_executeWorkUnit);
-  std::unique_ptr<policy::ExecutionPolicy> exe_policy;
-  const auto device_type = getDeviceTypeForTargets(ra_exe_unit, co.device_type);
-  LOG(DEBUG1) << "Device type for targets: " << device_type;
-  CHECK(!query_infos.empty());
-  if (!max_groups_buffer_entry_guess) {
-    LOG(DEBUG1) << "The query has failed the first execution attempt because of running "
-                   "out of group by slots. Make the conservative choice: allocate "
-                   "fragment size slots and run on the CPU.";
-    CHECK(device_type == ExecutorDeviceType::CPU);
-    max_groups_buffer_entry_guess = compute_buffer_entry_guess(query_infos);
-    exe_policy = std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(
-        ExecutorDeviceType::CPU);
-  } else {
-    costmodel::DummyCostModel cost_model(device_type, config_->exec.heterogeneous);
-    exe_policy = cost_model.predict(ra_exe_unit);
+  std::unique_ptr<policy::ExecutionPolicy> exe_policy = getExecutionPolicyForTargets(ra_exe_unit, co.device_type);
+
+  LOG(DEBUG1) << "BAGRORG: Getting estimations";
+  for (const auto &e: query_infos) {
+    auto t = e.info;
+    for (const auto &f: t.fragments) {
+      for (const auto &[k,v] : f.getChunkMetadataMapPhysical()) {
+        LOG(DEBUG1) << v->numBytes;
+      }
+    }
   }
+  LOG(DEBUG1) << "BAGRORG: Got";
 
   int8_t crt_min_byte_width{MAX_BYTE_WIDTH_SUPPORTED};
   do {
@@ -2149,6 +2145,12 @@ void Executor::addTransientStringLiterals(
 ExecutorDeviceType Executor::getDeviceTypeForTargets(
     const RelAlgExecutionUnit& ra_exe_unit,
     const ExecutorDeviceType requested_device_type) {
+  if (isDevicesRestricted(ra_exe_unit, requested_device_type)) return ExecutorDeviceType::CPU;
+  return requested_device_type;
+}
+
+bool Executor::isDevicesRestricted(const RelAlgExecutionUnit& ra_exe_unit,
+                                   const ExecutorDeviceType requested_device_type) {
   for (const auto target_expr : ra_exe_unit.target_exprs) {
     const auto agg_info =
         get_target_info(target_expr, getConfig().exec.group_by.bigint_count);
@@ -2158,15 +2160,59 @@ ExecutorDeviceType Executor::getDeviceTypeForTargets(
            agg_info.agg_kind == hdk::ir::AggType::kSum) &&
           agg_info.agg_arg_type->isFp64()) {
         LOG(DEBUG1) << "Falling back to CPU for AVG or SUM of DOUBLE";
-        return ExecutorDeviceType::CPU;
+        return true;
       }
     }
     if (dynamic_cast<const hdk::ir::RegexpExpr*>(target_expr)) {
       LOG(DEBUG1) << "Falling back to CPU for REGEXP";
-      return ExecutorDeviceType::CPU;
+      return true;
     }
   }
-  return requested_device_type;
+  return false;
+}
+
+std::unique_ptr<policy::ExecutionPolicy> Executor::getExecutionPolicyForTargets(
+    const RelAlgExecutionUnit& ra_exe_unit,
+    const ExecutorDeviceType requested_device_type,
+    const std::vector<InputTableInfo>& query_infos,
+    size_t& max_groups_buffer_entry_guess) {
+  if (isDevicesRestricted(ra_exe_unit, requested_device_type)) {
+    LOG(DEBUG1) << "Devices Restricted, falling back on CPU";
+    return std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(ExecutorDeviceType::CPU);
+  }
+
+  CHECK(!query_infos.empty());
+  if (!max_groups_buffer_entry_guess) {
+    LOG(DEBUG1) << "The query has failed the first execution attempt because of running "
+                   "out of group by slots. Make the conservative choice: allocate "
+                   "fragment size slots and run on the CPU.";
+    max_groups_buffer_entry_guess = compute_buffer_entry_guess(query_infos);
+    return std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(ExecutorDeviceType::CPU);
+  } 
+
+#ifdef HAVE_COST_MODEL
+  if (config_->exec.use_cost_model) {
+    // Cost model
+  }
+#endif 
+
+  std::unique_ptr<policy::ExecutionPolicy> exe_policy;
+  auto cfg = config_->exec.heterogeneous;
+  if (cfg.enable_heterogeneous_execution) {
+    if (cfg.forced_heterogeneous_distribution) {
+      std::map<ExecutorDeviceType, unsigned> distribution{
+          {ExecutorDeviceType::CPU, cfg.forced_cpu_proportion},
+          {ExecutorDeviceType::GPU, cfg.forced_gpu_proportion}};
+      exe_policy = std::make_unique<policy::ProportionBasedExecutionPolicy>(
+          std::move(distribution));
+    } else {
+      exe_policy = std::make_unique<policy::RoundRobinExecutionPolicy>();
+    }
+  } else {
+    exe_policy = std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(requested_device_type);
+  }
+
+  return exe_policy;
 }
 
 namespace {
@@ -3625,6 +3671,7 @@ llvm::Value* Executor::castToIntPtrTyIn(llvm::Value* val, const size_t bitWidth)
 #include "ArrayOps.cpp"
 #include "DateAdd.cpp"
 #include "StringFunctions.cpp"
+#include "Execute.h"
 #undef EXECUTE_INCLUDE
 
 namespace {

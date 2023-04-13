@@ -106,6 +106,10 @@ struct ExecutionConfig {
   bool cpu_only = false;
 
   bool materialize_inner_join_tables = true;
+
+#ifdef HAVE_COST_MODEL
+  bool use_cost_model = false;
+#endif
 };
 
 struct FilterPushdownConfig {

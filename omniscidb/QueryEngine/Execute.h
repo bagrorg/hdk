@@ -497,6 +497,11 @@ class Executor : public StringDictionaryProxyProvider {
       const RelAlgExecutionUnit& ra_exe_unit,
       const ExecutorDeviceType requested_device_type);
 
+  bool isDevicesRestricted(const RelAlgExecutionUnit& ra_exe_unit,
+      const ExecutorDeviceType requested_device_type);
+    
+  std::unique_ptr<policy::ExecutionPolicy> getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit, const ExecutorDeviceType requested_device_type);
+
   ResultSetPtr collectAllDeviceResults(
       SharedKernelContext& shared_context,
       const RelAlgExecutionUnit& ra_exe_unit,
