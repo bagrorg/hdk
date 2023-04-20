@@ -22,12 +22,16 @@
 
 #include "Dispatchers/ExecutionPolicy.h"
 #include "QueryEngine/CompilationOptions.h"
-#include "QueryEngine/Descriptors/RelAlgExecutionDescriptor.h"
 
 namespace costmodel {
 
 struct CaibrationConfig {
   std::vector<ExecutorDeviceType> devices;
+};
+
+struct QueryInfo {
+    AnalyticalTemplate templ;
+    size_t bytesSize;
 };
 
 using TemplatePredictions =
@@ -40,8 +44,7 @@ class CostModel {
   virtual ~CostModel() = default;
 
   virtual void calibrate(const CaibrationConfig& conf);
-  virtual std::unique_ptr<policy::ExecutionPolicy> predict(
-      const RelAlgExecutionUnit& queryDag) = 0;
+  virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo queryInfo) = 0;
 
  protected:
   std::unique_ptr<DataSource> dataSource_;

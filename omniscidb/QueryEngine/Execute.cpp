@@ -1822,8 +1822,8 @@ hdk::ResultSetTable Executor::executeWorkUnitImpl(
     exe_policy = std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(
         ExecutorDeviceType::CPU);
   } else {
-    costmodel::DummyCostModel cost_model(device_type, config_->exec.heterogeneous);
-    exe_policy = cost_model.predict(ra_exe_unit);
+    // costmodel::DummyCostModel cost_model(device_type, config_->exec.heterogeneous);
+    // exe_policy = cost_model.predict(ra_exe_unit);
   }
 
   int8_t crt_min_byte_width{MAX_BYTE_WIDTH_SUPPORTED};

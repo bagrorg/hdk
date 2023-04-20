@@ -30,6 +30,8 @@
 #include "RelAlgDagBuilder.h"
 #include "Shared/sqldefs.h"
 #include "Shared/toString.h"
+#include "CostModel/Measurements.h"
+#include "CostModel/CostModel.h"
 
 #include <boost/functional/hash.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -142,6 +144,10 @@ struct RelAlgExecutionUnit {
   TableIdToNodeMap table_id_to_node_map{};
   // empty if not a UNION, true if UNION ALL, false if regular UNION
   const std::optional<bool> union_all;
+
+  // Cost Model variables
+  std::shared_ptr<costmodel::CostModel> cost_model;
+  costmodel::AnalyticalTemplate templ = costmodel::AnalyticalTemplate::Unknown;
 };
 
 std::ostream& operator<<(std::ostream& os, const RelAlgExecutionUnit& ra_exe_unit);

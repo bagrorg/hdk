@@ -130,6 +130,9 @@ RelAlgExecutor::RelAlgExecutor(Executor* executor,
       hdk::ResultSetRegistry::SCHEMA_ID,
       std::dynamic_pointer_cast<hdk::ResultSetRegistry>(rs_registry_));
   schema_provider_ = schema_mgr;
+
+  // TODO
+  // cost_model = std::make_shared<...>();
 }
 
 RelAlgExecutor::~RelAlgExecutor() {
@@ -1508,6 +1511,11 @@ RelAlgExecutor::WorkUnit RelAlgExecutor::createWorkUnit(const hdk::ir::Node* nod
   }
 
   target_exprs_owned_ = builder.releaseTargetExprsOwned();
+
+  rewritten_exe_unit.cost_model = cost_model;
+  if (dynamic_cast<const hdk::ir::Sort*>(node) != nullptr) {
+    rewritten_exe_unit.templ = costmodel::AnalyticalTemplate::Sort;
+  }
 
   return {rewritten_exe_unit,
           node,

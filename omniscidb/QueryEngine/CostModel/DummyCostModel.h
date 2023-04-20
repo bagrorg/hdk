@@ -16,6 +16,7 @@
 #include "CostModel.h"
 #include "DataSources/EmptyDataSource.h"
 #include "Shared/Config.h"
+#include "QueryEngine/Descriptors/RelAlgExecutionDescriptor.h"
 
 namespace costmodel {
 
@@ -24,8 +25,7 @@ class DummyCostModel : public CostModel {
   DummyCostModel(ExecutorDeviceType dt, const HeterogenousConfig& cfg)
       : CostModel(std::make_unique<EmptyDataSource>()), dt_(dt), cfg_(cfg) {}
 
-  std::unique_ptr<policy::ExecutionPolicy> predict(
-      const RelAlgExecutionUnit& queryDag) override;
+    virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo queryInfo) {return nullptr;}
 
  private:
   const ExecutorDeviceType dt_;

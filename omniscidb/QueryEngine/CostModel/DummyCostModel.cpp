@@ -19,23 +19,23 @@
 
 namespace costmodel {
 
-std::unique_ptr<policy::ExecutionPolicy> DummyCostModel::predict(
-    const RelAlgExecutionUnit& queryDag) {
-  std::unique_ptr<policy::ExecutionPolicy> exe_policy;
-  if (cfg_.enable_heterogeneous_execution) {
-    if (cfg_.forced_heterogeneous_distribution) {
-      std::map<ExecutorDeviceType, unsigned> distribution{
-          {ExecutorDeviceType::CPU, cfg_.forced_cpu_proportion},
-          {ExecutorDeviceType::GPU, cfg_.forced_gpu_proportion}};
-      exe_policy = std::make_unique<policy::ProportionBasedExecutionPolicy>(
-          std::move(distribution));
-    } else {
-      exe_policy = std::make_unique<policy::RoundRobinExecutionPolicy>();
-    }
-  } else {
-    exe_policy = std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(dt_);
-  }
-  return exe_policy;
-}
+// std::unique_ptr<policy::ExecutionPolicy> DummyCostModel::predict(
+//     const RelAlgExecutionUnit& queryDag) {
+//   std::unique_ptr<policy::ExecutionPolicy> exe_policy;
+//   if (cfg_.enable_heterogeneous_execution) {
+//     if (cfg_.forced_heterogeneous_distribution) {
+//       std::map<ExecutorDeviceType, unsigned> distribution{
+//           {ExecutorDeviceType::CPU, cfg_.forced_cpu_proportion},
+//           {ExecutorDeviceType::GPU, cfg_.forced_gpu_proportion}};
+//       exe_policy = std::make_unique<policy::ProportionBasedExecutionPolicy>(
+//           std::move(distribution));
+//     } else {
+//       exe_policy = std::make_unique<policy::RoundRobinExecutionPolicy>();
+//     }
+//   } else {
+//     exe_policy = std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(dt_);
+//   }
+//   return exe_policy;
+// }
 
 }  // namespace costmodel
