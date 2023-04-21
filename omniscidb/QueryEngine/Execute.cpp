@@ -1796,15 +1796,16 @@ hdk::ResultSetTable Executor::finishStreamExecution(
   return result;
 }
 
-std::pair<std::unique_ptr<policy::ExecutionPolicy>, ExecutorDeviceType> Executor::getExecutionPolicyForTargets(
-    const RelAlgExecutionUnit& ra_exe_unit,
-    const ExecutorDeviceType requested_device_type,
-    const std::vector<InputTableInfo>& query_infos,
-    size_t& max_groups_buffer_entry_guess) {
+std::pair<std::unique_ptr<policy::ExecutionPolicy>, ExecutorDeviceType>
+Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
+                                       const ExecutorDeviceType requested_device_type,
+                                       const std::vector<InputTableInfo>& query_infos,
+                                       size_t& max_groups_buffer_entry_guess) {
   if (isDevicesRestricted(ra_exe_unit, requested_device_type)) {
     LOG(DEBUG1) << "Devices Restricted, falling back on CPU";
     return {std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(
-        ExecutorDeviceType::CPU), ExecutorDeviceType::CPU};
+                ExecutorDeviceType::CPU),
+            ExecutorDeviceType::CPU};
   }
 
   CHECK(!query_infos.empty());
@@ -1814,32 +1815,37 @@ std::pair<std::unique_ptr<policy::ExecutionPolicy>, ExecutorDeviceType> Executor
                    "fragment size slots and run on the CPU.";
     max_groups_buffer_entry_guess = compute_buffer_entry_guess(query_infos);
     return {std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(
-        ExecutorDeviceType::CPU), ExecutorDeviceType::CPU};
+                ExecutorDeviceType::CPU),
+            ExecutorDeviceType::CPU};
   }
 
   std::unique_ptr<policy::ExecutionPolicy> exe_policy;
 
-  if (config_->exec.use_cost_model && ra_exe_unit.cost_model != nullptr && ra_exe_unit.templ != costmodel::AnalyticalTemplate::Unknown) {
+  if (config_->exec.use_cost_model && ra_exe_unit.cost_model != nullptr &&
+      ra_exe_unit.templ != costmodel::AnalyticalTemplate::Unknown) {
+    LOG(DEBUG1) << "Cost Model enabled, making prediction for template "
+                << costmodel::templateToString(ra_exe_unit.templ);
     size_t bytes = 0;
 
     // TODO how can we get bytes estimation more correctly?
-    for (const auto &e: query_infos) {
+    for (const auto& e : query_infos) {
       auto t = e.info;
-      for (const auto &f: t.fragments) {
-        for (const auto &[k,v] : f.getChunkMetadataMapPhysical()) {
+      for (const auto& f : t.fragments) {
+        for (const auto& [k, v] : f.getChunkMetadataMapPhysical()) {
           bytes += v->numBytes();
         }
       }
     }
 
-    costmodel::QueryInfo qi = {
-      .templ = ra_exe_unit.templ,
-      .bytesSize = bytes
-    };
+    costmodel::QueryInfo qi = {.templ = ra_exe_unit.templ, .bytesSize = bytes};
     exe_policy = ra_exe_unit.cost_model->predict(qi);
     return {std::move(exe_policy), requested_device_type};
   }
 
+  LOG(DEBUG1) << "Cost Model disabled, or template is unknown: templ="
+              << costmodel::templateToString(ra_exe_unit.templ)
+              << " cost_model=" << ra_exe_unit.cost_model << " cost model in config: "
+              << (config_->exec.use_cost_model ? "enabled" : "disabled");
   auto cfg = config_->exec.heterogeneous;
   if (cfg.enable_heterogeneous_execution) {
     if (cfg.forced_heterogeneous_distribution) {
@@ -1871,8 +1877,8 @@ hdk::ResultSetTable Executor::executeWorkUnitImpl(
     DataProvider* data_provider,
     ColumnCacheMap& column_cache) {
   INJECT_TIMER(Exec_executeWorkUnit);
-  auto [exe_policy, fallback_device] =
-      getExecutionPolicyForTargets(ra_exe_unit, co.device_type, query_infos, max_groups_buffer_entry_guess);
+  auto [exe_policy, fallback_device] = getExecutionPolicyForTargets(
+      ra_exe_unit, co.device_type, query_infos, max_groups_buffer_entry_guess);
 
   int8_t crt_min_byte_width{MAX_BYTE_WIDTH_SUPPORTED};
   do {
