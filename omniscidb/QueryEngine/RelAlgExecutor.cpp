@@ -48,6 +48,8 @@
 #include <boost/make_unique.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 
+#include "CostModel/BinaryCostModel.h"
+
 #include <algorithm>
 #include <functional>
 #include <numeric>
@@ -131,8 +133,8 @@ RelAlgExecutor::RelAlgExecutor(Executor* executor,
       std::dynamic_pointer_cast<hdk::ResultSetRegistry>(rs_registry_));
   schema_provider_ = schema_mgr;
 
-  // TODO
-  // cost_model = std::make_shared<...>();
+  cost_model = std::make_shared<costmodel::BinaryCostModel>();
+  cost_model->calibrate({{ ExecutorDeviceType::CPU, ExecutorDeviceType::GPU }});    // TODO maybe get devices list somewhere else?
 }
 
 RelAlgExecutor::~RelAlgExecutor() {

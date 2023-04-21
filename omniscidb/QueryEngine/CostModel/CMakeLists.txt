@@ -8,6 +8,7 @@ set(COST_MODEL_SOURCES
         Dispatchers/DefaultExecutionPolicy.cpp
         Dispatchers/RRExecutionPolicy.cpp
         Dispatchers/ProportionBasedExecutionPolicy.cpp
+        BinaryCostModel.cpp
 )
 
 set(COST_MODEL_LIBS Logger)

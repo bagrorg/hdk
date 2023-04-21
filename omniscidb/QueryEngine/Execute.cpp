@@ -1821,6 +1821,8 @@ std::pair<std::unique_ptr<policy::ExecutionPolicy>, ExecutorDeviceType> Executor
 
   if (config_->exec.use_cost_model && ra_exe_unit.cost_model != nullptr && ra_exe_unit.templ != costmodel::AnalyticalTemplate::Unknown) {
     size_t bytes = 0;
+
+    // TODO how can we get bytes estimation more correctly?
     for (const auto &e: query_infos) {
       auto t = e.info;
       for (const auto &f: t.fragments) {

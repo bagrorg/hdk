@@ -19,16 +19,11 @@
 
 namespace costmodel {
 
-class DummyCostModel : public CostModel {
+class BinaryCostModel : public CostModel {
  public:
-  DummyCostModel(ExecutorDeviceType dt, const HeterogenousConfig& cfg)
-      : CostModel(std::make_unique<EmptyDataSource>()), dt_(dt), cfg_(cfg) {}
+  BinaryCostModel() : CostModel(std::make_unique<EmptyDataSource>()) {}
 
-    virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo queryInfo) {return nullptr;}
-
- private:
-  const ExecutorDeviceType dt_;
-  const HeterogenousConfig& cfg_;
+    virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo queryInfo);
 };
 
 }  // namespace costmodel
