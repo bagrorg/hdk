@@ -150,6 +150,10 @@ void ExecutionKernel::run(Executor* executor,
   }
 }
 
+ExecutorDeviceType ExecutionKernel::getChosenDevice() const {
+  return chosen_device_type;
+}
+
 void ExecutionKernel::runImpl(Executor* executor,
                               const size_t thread_idx,
                               SharedKernelContext& shared_context) {
