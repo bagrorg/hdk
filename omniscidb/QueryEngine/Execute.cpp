@@ -1820,9 +1820,11 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
   }
 
   std::unique_ptr<policy::ExecutionPolicy> exe_policy;
+  auto cfg = config_->exec.heterogeneous;
 
   if (config_->exec.use_cost_model && ra_exe_unit.cost_model != nullptr &&
-      ra_exe_unit.templ != costmodel::AnalyticalTemplate::Unknown) {
+      ra_exe_unit.templ != costmodel::AnalyticalTemplate::Unknown &&
+      cfg.enable_heterogeneous_execution) {
     LOG(DEBUG1) << "Cost Model enabled, making prediction for template "
                 << costmodel::templateToString(ra_exe_unit.templ);
     size_t bytes = 0;
@@ -1838,15 +1840,18 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
     }
 
     costmodel::QueryInfo qi = {.templ = ra_exe_unit.templ, .bytesSize = bytes};
+
+    // TODO check that template is available for cost model
     exe_policy = ra_exe_unit.cost_model->predict(qi);
     return {std::move(exe_policy), requested_device_type};
   }
 
   LOG(DEBUG1) << "Cost Model disabled, or template is unknown: templ="
               << costmodel::templateToString(ra_exe_unit.templ)
-              << " cost_model=" << ra_exe_unit.cost_model << " cost model in config: "
-              << (config_->exec.use_cost_model ? "enabled" : "disabled");
-  auto cfg = config_->exec.heterogeneous;
+              << " cost_model=" << ra_exe_unit.cost_model << ", cost model in config: "
+              << (config_->exec.use_cost_model ? "enabled" : "disabled")
+              << ", heterogeneous execution: " << cfg.enable_heterogeneous_execution ? "enabled" : "disabled";
+  
   if (cfg.enable_heterogeneous_execution) {
     if (cfg.forced_heterogeneous_distribution) {
       std::map<ExecutorDeviceType, unsigned> distribution{
@@ -2598,8 +2603,11 @@ void Executor::launchKernels(SharedKernelContext& shared_context,
   ScopeGuard pool_guard([&shared_context]() { shared_context.setThreadPool(nullptr); });
 #endif  // HAVE_TBB
 
-  VLOG(1) << "Launching " << kernels.size() << " kernels for query on "
-          << (device_type == ExecutorDeviceType::CPU ? "CPU"s : "GPU"s) << ".";
+  VLOG(1) << "Launching " << kernels.size() << " kernels for query on: ";
+  for (size_t i = 0; i < kernels.size(); i++) {
+    VLOG(1) << "\t" << i << ' ' << (kernels[i]->getChosenDevice() == ExecutorDeviceType::CPU ? "CPU"s : "GPU"s) << ".";
+  }
+
   size_t kernel_idx = 1;
   for (auto& kernel : kernels) {
     CHECK(kernel.get());
