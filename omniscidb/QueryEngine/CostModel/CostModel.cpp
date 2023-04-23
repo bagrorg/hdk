@@ -14,6 +14,10 @@
 #include "CostModel.h"
 #include "ExtrapolationModels/LinearExtrapolation.h"
 
+#ifdef HAVE_ARMADILLO
+#include "ExtrapolationModels/LinearRegression.h"
+#endif
+
 namespace costmodel {
 
 CostModel::CostModel(std::unique_ptr<DataSource> _dataSource)
@@ -49,15 +53,21 @@ void CostModel::calibrate(const CaibrationConfig& conf) {
 
     for (auto& templateMeasurement : dmEntry.second) {
       AnalyticalTemplate templ = templateMeasurement.first;
+
+#ifdef HAVE_ARMADILLO
+      dp_[device][templ] =
+          std::make_unique<LinearRegression>(std::move(templateMeasurement.second));
+#else
       dp_[device][templ] =
           std::make_unique<LinearExtrapolation>(std::move(templateMeasurement.second));
+#endif
     }
   }
 }
 
-const std::vector<AnalyticalTemplate> CostModel::templates_ = {GroupBy,
+const std::vector<AnalyticalTemplate> CostModel::templates_ = {Scan,
+                                                               Sort,
                                                                Join,
-                                                               Scan,
-                                                               Reduce};
+                                                               GroupBy};
 
 }  // namespace costmodel
