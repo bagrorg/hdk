@@ -21,9 +21,11 @@ namespace costmodel {
 
 class BinaryCostModel : public CostModel {
  public:
-  BinaryCostModel() : CostModel(std::make_unique<EmptyDataSource>()) {}
+  BinaryCostModel(std::unique_ptr<DataSource> source) : CostModel(std::move(source)) {}
 
     virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo queryInfo);
+ private:
+    static constexpr size_t optimizationIterations = 1024;
 };
 
 }  // namespace costmodel

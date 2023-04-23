@@ -1,14 +1,40 @@
 #include "BinaryCostModel.h"
-#include "Dispatchers/DefaultExecutionPolicy.h"
+#include "Dispatchers/ProportionBasedExecutionPolicy.h"
 
-std::unique_ptr<policy::ExecutionPolicy> costmodel::BinaryCostModel::predict(
+#include <cmath>
+
+namespace costmodel {
+
+std::unique_ptr<policy::ExecutionPolicy> BinaryCostModel::predict(
     QueryInfo queryInfo) {
         std::lock_guard<std::mutex> l(latch_);
 
-    size_t cpuExtrapolation = dp_[ExecutorDeviceType::CPU][queryInfo.templ]->getExtrapolatedData(queryInfo.bytesSize);
-    size_t gpuExtrapolation = dp_[ExecutorDeviceType::GPU][queryInfo.templ]->getExtrapolatedData(queryInfo.bytesSize);
+    unsigned cpuProp, gpuProp;
+    size_t optStep = std::ceil(static_cast<float>(queryInfo.bytesSize) / optimizationIterations);
+    size_t runtimePrediction = std::numeric_limits<size_t>::max();
+
+    for (size_t curSize = 0; curSize < queryInfo.bytesSize; curSize += optStep) {
+        size_t cpuSize = curSize;
+        size_t gpuSize = queryInfo.bytesSize - curSize;
+
+        size_t cpuPrediction = dp_[ExecutorDeviceType::CPU][queryInfo.templ]->getExtrapolatedData(cpuSize);
+        size_t gpuPrediction = dp_[ExecutorDeviceType::GPU][queryInfo.templ]->getExtrapolatedData(gpuSize);
+        size_t curPrediction = std::max(gpuPrediction, cpuPrediction);
+
+        if (curPrediction < runtimePrediction) {
+            runtimePrediction = curPrediction;
+
+            cpuProp = static_cast<float>(cpuSize) / queryInfo.bytesSize * 10;
+            gpuProp = 10 - cpuProp;
+        }
+    }
+
+    std::map<ExecutorDeviceType, unsigned> proportion;
     
-    if (cpuExtrapolation > gpuExtrapolation) return std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(ExecutorDeviceType::GPU);
+    proportion[ExecutorDeviceType::GPU] = gpuProp;
+    proportion[ExecutorDeviceType::CPU] = cpuProp;
     
-    return std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(ExecutorDeviceType::CPU);
+
+    return std::make_unique<policy::ProportionBasedExecutionPolicy>(std::move(proportion));
+}
 }
