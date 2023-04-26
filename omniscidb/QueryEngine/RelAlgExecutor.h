@@ -248,8 +248,6 @@ class RelAlgExecutor {
 
   std::shared_ptr<StreamExecutionContext> stream_execution_context_;
 
-  std::shared_ptr<costmodel::CostModel> cost_model;
-
   friend class PendingExecutionClosure;
 };
 

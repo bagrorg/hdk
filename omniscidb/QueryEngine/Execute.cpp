@@ -73,6 +73,12 @@
 #include "Shared/threading.h"
 #include "ThirdParty/robin_hood.h"
 
+#include "CostModel/BinaryCostModel.h"
+
+#ifdef HAVE_DWARF_BENCH
+#include "CostModel/DataSources/DwarfBench.h"
+#endif
+
 using namespace std::string_literals;
 
 extern std::unique_ptr<llvm::Module> udf_gpu_module;
@@ -173,6 +179,17 @@ Executor::Executor(const ExecutorId executor_id,
   });
   Executor::initialize_extension_module_sources();
   update_extension_modules();
+
+#ifdef HAVE_DWARF_BENCH
+  cost_model = std::make_shared<costmodel::BinaryCostModel>(std::make_unique<costmodel::DwarfBenchDataSource>());
+  cost_model->calibrate({{ ExecutorDeviceType::CPU, ExecutorDeviceType::GPU }});    // TODO maybe get devices list somewhere else?
+#else
+  cost_model = nullptr;
+#endif
+}
+
+std::shared_ptr<costmodel::CostModel> Executor::getCostModel() {
+  return cost_model;
 }
 
 void Executor::initialize_extension_module_sources() {

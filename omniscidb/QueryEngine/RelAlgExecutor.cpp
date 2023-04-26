@@ -48,12 +48,6 @@
 #include <boost/make_unique.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 
-#include "CostModel/BinaryCostModel.h"
-
-#ifdef HAVE_DWARF_BENCH
-#include "CostModel/DataSources/DwarfBench.h"
-#endif
-
 #include <algorithm>
 #include <functional>
 #include <numeric>
@@ -136,13 +130,6 @@ RelAlgExecutor::RelAlgExecutor(Executor* executor,
       hdk::ResultSetRegistry::SCHEMA_ID,
       std::dynamic_pointer_cast<hdk::ResultSetRegistry>(rs_registry_));
   schema_provider_ = schema_mgr;
-
-#ifdef HAVE_DWARF_BENCH
-  cost_model = std::make_shared<costmodel::BinaryCostModel>(std::make_unique<costmodel::DwarfBenchDataSource>());
-  cost_model->calibrate({{ ExecutorDeviceType::CPU, ExecutorDeviceType::GPU }});    // TODO maybe get devices list somewhere else?
-#else
-  cost_model = nullptr;
-#endif
 }
 
 RelAlgExecutor::~RelAlgExecutor() {
@@ -1522,7 +1509,7 @@ RelAlgExecutor::WorkUnit RelAlgExecutor::createWorkUnit(const hdk::ir::Node* nod
 
   target_exprs_owned_ = builder.releaseTargetExprsOwned();
 
-  rewritten_exe_unit.cost_model = cost_model;
+  rewritten_exe_unit.cost_model = executor_->getCostModel();
   if (dynamic_cast<const hdk::ir::Sort*>(node) != nullptr) {
     rewritten_exe_unit.templ = costmodel::AnalyticalTemplate::Sort;
   } else if (dynamic_cast<const hdk::ir::Aggregate*>(node) != nullptr) {

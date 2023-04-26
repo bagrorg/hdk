@@ -81,6 +81,8 @@
 #include "StringDictionary/StringDictionary.h"
 #include "StringDictionary/StringDictionaryProxy.h"
 
+#include "CostModel/CostModel.h"
+
 using QueryCompilationDescriptorOwned = std::unique_ptr<QueryCompilationDescriptor>;
 class QueryMemoryDescriptor;
 using QueryMemoryDescriptorOwned = std::unique_ptr<QueryMemoryDescriptor>;
@@ -279,6 +281,8 @@ class Executor : public StringDictionaryProxyProvider {
     CHECK(extension_module_context_);
     return extension_module_context_.get();
   }
+
+  std::shared_ptr<costmodel::CostModel> getCostModel();
 
   /**
    * Returns pointer to the intermediate tables vector currently stored by this
@@ -1004,6 +1008,8 @@ class Executor : public StringDictionaryProxyProvider {
 
   int64_t kernel_queue_time_ms_ = 0;
   int64_t compilation_queue_time_ms_ = 0;
+
+  std::shared_ptr<costmodel::CostModel> cost_model;
 
   // Singleton instance used for an execution unit which is a project with window
   // functions.
