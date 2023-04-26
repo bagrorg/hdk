@@ -19,9 +19,9 @@
 
 namespace costmodel {
 
-class BinaryCostModel : public CostModel {
+class IterativeCostModel : public CostModel {
  public:
-  BinaryCostModel(std::unique_ptr<DataSource> source) : CostModel(std::move(source)) {}
+  IterativeCostModel(std::unique_ptr<DataSource> source) : CostModel(std::move(source)) {}
 
     virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo queryInfo);
  private:

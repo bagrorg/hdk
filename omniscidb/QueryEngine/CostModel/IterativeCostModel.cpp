@@ -1,11 +1,11 @@
-#include "BinaryCostModel.h"
+#include "IterativeCostModel.h"
 #include "Dispatchers/ProportionBasedExecutionPolicy.h"
 
 #include <cmath>
 
 namespace costmodel {
 
-std::unique_ptr<policy::ExecutionPolicy> BinaryCostModel::predict(
+std::unique_ptr<policy::ExecutionPolicy> IterativeCostModel::predict(
     QueryInfo queryInfo) {
         std::lock_guard<std::mutex> l(latch_);
 

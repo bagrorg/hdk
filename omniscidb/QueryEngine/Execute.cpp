@@ -73,7 +73,7 @@
 #include "Shared/threading.h"
 #include "ThirdParty/robin_hood.h"
 
-#include "CostModel/BinaryCostModel.h"
+#include "CostModel/IterativeCostModel.h"
 
 #ifdef HAVE_DWARF_BENCH
 #include "CostModel/DataSources/DwarfBench.h"
@@ -181,7 +181,7 @@ Executor::Executor(const ExecutorId executor_id,
   update_extension_modules();
 
 #ifdef HAVE_DWARF_BENCH
-  cost_model = std::make_shared<costmodel::BinaryCostModel>(std::make_unique<costmodel::DwarfBenchDataSource>());
+  cost_model = std::make_shared<costmodel::IterativeCostModel>(std::make_unique<costmodel::DwarfBenchDataSource>());
   cost_model->calibrate({{ ExecutorDeviceType::CPU, ExecutorDeviceType::GPU }});    // TODO maybe get devices list somewhere else?
 #else
   cost_model = nullptr;
