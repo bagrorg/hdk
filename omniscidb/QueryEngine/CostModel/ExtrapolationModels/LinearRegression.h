@@ -27,7 +27,7 @@ class LinearRegression : public ExtrapolationModel {
 
   virtual ~LinearRegression();
 
-  size_t getExtrapolatedData(size_t bytes) override;
+  size_t getExtrapolatedData(size_t bytes) const override;
 
  protected:
   void buildRegressionCoefficients();

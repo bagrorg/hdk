@@ -49,9 +49,11 @@ class CostModel {
   virtual ~CostModel() = default;
 
   virtual void calibrate(const CaibrationConfig& conf);
-  virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo queryInfo) = 0;
+  virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo queryInfo) const = 0;
 
  protected:
+    size_t getExtrapolatedData(ExecutorDeviceType device, AnalyticalTemplate templ, size_t bytes) const;
+
   CostModelConfig config_;
 
     ExtrapolationModelProvider extrapolationProvider_;
@@ -63,7 +65,7 @@ class CostModel {
   std::vector<ExecutorDeviceType> devices_ = {ExecutorDeviceType::CPU,
                                               ExecutorDeviceType::GPU};
 
-  std::shared_mutex latch_;
+  mutable std::shared_mutex latch_;
 };
 
 class CostModelException : std::runtime_error {

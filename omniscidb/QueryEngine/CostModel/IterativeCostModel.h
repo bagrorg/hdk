@@ -24,7 +24,7 @@ class IterativeCostModel : public CostModel {
   IterativeCostModel();
   IterativeCostModel(CostModelConfig config) : CostModel(std::move(config)) {}
 
-    virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo queryInfo);
+    virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo queryInfo) const;
  private:
     static constexpr size_t optimizationIterations = 1024;
 };

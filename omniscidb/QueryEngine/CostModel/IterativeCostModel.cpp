@@ -16,7 +16,7 @@ IterativeCostModel::IterativeCostModel() : CostModel({std::make_unique<EmptyData
 #endif
 
 std::unique_ptr<policy::ExecutionPolicy> IterativeCostModel::predict(
-    QueryInfo queryInfo) {
+    QueryInfo queryInfo) const {
         std::shared_lock<std::shared_mutex> l(latch_);
 
     unsigned cpuProp, gpuProp;
@@ -26,9 +26,9 @@ std::unique_ptr<policy::ExecutionPolicy> IterativeCostModel::predict(
     for (size_t curSize = 0; curSize < queryInfo.bytesSize; curSize += optStep) {
         size_t cpuSize = curSize;
         size_t gpuSize = queryInfo.bytesSize - curSize;
-
-        size_t cpuPrediction = dp_[ExecutorDeviceType::CPU][queryInfo.templ]->getExtrapolatedData(cpuSize);
-        size_t gpuPrediction = dp_[ExecutorDeviceType::GPU][queryInfo.templ]->getExtrapolatedData(gpuSize);
+        
+        size_t cpuPrediction = getExtrapolatedData(ExecutorDeviceType::CPU, queryInfo.templ, cpuSize);
+        size_t gpuPrediction = getExtrapolatedData(ExecutorDeviceType::GPU, queryInfo.templ, gpuSize);
         size_t curPrediction = std::max(gpuPrediction, cpuPrediction);
 
         if (curPrediction < runtimePrediction) {

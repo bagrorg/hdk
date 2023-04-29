@@ -58,6 +58,22 @@ void CostModel::calibrate(const CaibrationConfig& conf) {
   }
 }
 
+size_t CostModel::getExtrapolatedData(ExecutorDeviceType device,
+                                      AnalyticalTemplate templ,
+                                      size_t bytes) const {
+  auto deviceMeasurementsIt = dp_.find(device);
+  if (deviceMeasurementsIt == dp_.end()) {
+    throw CostModelException("there is no " + deviceToString(device) + " in measured data");
+  }
+
+  auto modelIt = deviceMeasurementsIt->second.find(templ);
+  if (modelIt == deviceMeasurementsIt->second.end()) {
+    throw CostModelException("there is no " + templateToString(templ) + " in measured data for " + deviceToString(device));
+  }
+
+  return modelIt->second->getExtrapolatedData(bytes);
+}
+
 const std::vector<AnalyticalTemplate> CostModel::templates_ = {Scan,
                                                                Sort,
                                                                Join,
