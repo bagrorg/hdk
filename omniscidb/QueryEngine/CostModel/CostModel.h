@@ -17,7 +17,7 @@
 #include <mutex>
 
 #include "DataSources/DataSource.h"
-#include "ExtrapolationModels/ExtrapolationModel.h"
+#include "ExtrapolationModels/ExtrapolationModelProvider.h"
 #include "Measurements.h"
 
 #include "Dispatchers/ExecutionPolicy.h"
@@ -53,6 +53,8 @@ class CostModel {
 
  protected:
   CostModelConfig config_;
+
+    ExtrapolationModelProvider extrapolationProvider_;
 
   DevicePredictions dp_;
 

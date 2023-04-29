@@ -9,6 +9,7 @@ set(COST_MODEL_SOURCES
         Dispatchers/RRExecutionPolicy.cpp
         Dispatchers/ProportionBasedExecutionPolicy.cpp
         IterativeCostModel.cpp
+        ExtrapolationModels/ExtrapolationModelProvider.cpp 
 )
 
 set(COST_MODEL_LIBS Logger)

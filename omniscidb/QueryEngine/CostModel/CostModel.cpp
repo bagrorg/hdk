@@ -53,14 +53,7 @@ void CostModel::calibrate(const CaibrationConfig& conf) {
 
     for (auto& templateMeasurement : dmEntry.second) {
       AnalyticalTemplate templ = templateMeasurement.first;
-
-#ifdef HAVE_ARMADILLO
-      dp_[device][templ] =
-          std::make_unique<LinearRegression>(std::move(templateMeasurement.second));
-#else
-      dp_[device][templ] =
-          std::make_unique<LinearExtrapolation>(std::move(templateMeasurement.second));
-#endif
+      dp_[device][templ] = extrapolationProvider_.provide(std::move(templateMeasurement.second));
     }
   }
 }
