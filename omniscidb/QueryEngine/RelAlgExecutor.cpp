@@ -1510,11 +1510,11 @@ RelAlgExecutor::WorkUnit RelAlgExecutor::createWorkUnit(const hdk::ir::Node* nod
   target_exprs_owned_ = builder.releaseTargetExprsOwned();
 
   rewritten_exe_unit.cost_model = executor_->getCostModel();
-  if (dynamic_cast<const hdk::ir::Sort*>(node) != nullptr) {
+  if (dynamic_cast<const hdk::ir::Sort*>(node)) {
     rewritten_exe_unit.templ = costmodel::AnalyticalTemplate::Sort;
-  } else if (dynamic_cast<const hdk::ir::Aggregate*>(node) != nullptr) {
+  } else if (dynamic_cast<const hdk::ir::Aggregate*>(node)) {
     rewritten_exe_unit.templ = costmodel::AnalyticalTemplate::GroupBy;
-  } else if (dynamic_cast<const hdk::ir::Join*>(node) != nullptr) {
+  } else if (dynamic_cast<const hdk::ir::Join*>(node)) {
     rewritten_exe_unit.templ = costmodel::AnalyticalTemplate::Join;
   }
 
