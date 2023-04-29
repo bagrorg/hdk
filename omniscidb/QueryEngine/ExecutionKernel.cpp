@@ -150,8 +150,8 @@ void ExecutionKernel::run(Executor* executor,
   }
 }
 
-ExecutorDeviceType ExecutionKernel::getChosenDevice() const {
-  return chosen_device_type;
+std::string ExecutionKernel::toString() const {
+  return chosen_device_type == ExecutorDeviceType::CPU ? "CPU" : "GPU";
 }
 
 void ExecutionKernel::runImpl(Executor* executor,

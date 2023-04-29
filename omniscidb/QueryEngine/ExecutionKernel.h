@@ -109,7 +109,7 @@ class ExecutionKernel {
 
   const RelAlgExecutionUnit& ra_exe_unit_;
 
-  ExecutorDeviceType getChosenDevice() const;
+  std::string toString() const;
 
  private:
   const ExecutorDeviceType chosen_device_type;

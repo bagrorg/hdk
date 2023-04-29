@@ -1834,8 +1834,6 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
   if (config_->exec.enable_cost_model && ra_exe_unit.cost_model != nullptr &&
       ra_exe_unit.templ != costmodel::AnalyticalTemplate::Unknown &&
       cfg.enable_heterogeneous_execution) {
-    LOG(DEBUG1) << "Cost Model enabled, making prediction for template "
-                << costmodel::templateToString(ra_exe_unit.templ);
     size_t bytes = 0;
 
     // TODO how can we get bytes estimation more correctly?
@@ -1848,6 +1846,9 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
       }
     }
 
+    LOG(DEBUG1) << "Cost Model enabled, making prediction for template "
+                << toString(ra_exe_unit.templ) << " for size " << bytes;
+
     costmodel::QueryInfo qi = {.templ = ra_exe_unit.templ, .bytes_size = bytes};
 
     // TODO check that template is available for cost model
@@ -1856,7 +1857,7 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
   }
 
   LOG(DEBUG1) << "Cost Model disabled, or template is unknown: templ="
-              << costmodel::templateToString(ra_exe_unit.templ)
+              << toString(ra_exe_unit.templ)
               << " cost_model=" << ra_exe_unit.cost_model << ", cost model in config: "
               << (config_->exec.enable_cost_model ? "enabled" : "disabled")
               << ", heterogeneous execution: " << cfg.enable_heterogeneous_execution ? "enabled" : "disabled";
@@ -2614,7 +2615,7 @@ void Executor::launchKernels(SharedKernelContext& shared_context,
 
   VLOG(1) << "Launching " << kernels.size() << " kernels for query on: ";
   for (size_t i = 0; i < kernels.size(); i++) {
-    VLOG(1) << "\t" << i << ' ' << (kernels[i]->getChosenDevice() == ExecutorDeviceType::CPU ? "CPU"s : "GPU"s) << ".";
+    VLOG(1) << "\t" << i << ' ' << (toString(kernels[i])) << ".";
   }
 
   size_t kernel_idx = 1;
