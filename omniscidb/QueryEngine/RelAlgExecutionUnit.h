@@ -145,7 +145,6 @@ struct RelAlgExecutionUnit {
   // empty if not a UNION, true if UNION ALL, false if regular UNION
   const std::optional<bool> union_all;
 
-  // Cost Model variables
   std::shared_ptr<costmodel::CostModel> cost_model;
   costmodel::AnalyticalTemplate templ = costmodel::AnalyticalTemplate::Unknown;
 };
