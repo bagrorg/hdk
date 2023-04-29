@@ -34,8 +34,8 @@ std::unique_ptr<policy::ExecutionPolicy> IterativeCostModel::predict(
         if (cur_prediction < runtime_prediction) {
             runtime_prediction = cur_prediction;
 
-            cpu_prop = static_cast<float>(cpu_size) / query_info.bytes_size * 10;
-            gpu_prop = 10 - cpu_prop;
+            cpu_prop = cpu_size;
+            gpu_prop = gpu_size;
         }
     }
 
