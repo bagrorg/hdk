@@ -26,11 +26,11 @@
 #ifndef QUERYENGINE_RELALGEXECUTIONUNIT_H
 #define QUERYENGINE_RELALGEXECUTIONUNIT_H
 
+#include "CostModel/CostModel.h"
 #include "Descriptors/InputDescriptors.h"
 #include "RelAlgDagBuilder.h"
 #include "Shared/sqldefs.h"
 #include "Shared/toString.h"
-#include "CostModel/CostModel.h"
 
 #include <boost/functional/hash.hpp>
 #include <boost/graph/adjacency_list.hpp>

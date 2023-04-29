@@ -13,20 +13,21 @@
 
 #include "ExtrapolationModelProvider.h"
 
-
-namespace costmodel { 
-    std::unique_ptr<ExtrapolationModel> ExtrapolationModelProvider::provide(const std::vector<Detail::Measurement>& measurement) {
-        #ifdef HAVE_ARMADILLO
-        return std::make_unique<LinearRegression>(measurement);
-        #else
-        return std::make_unique<LinearExtrapolation>(measurement);
-        #endif
-    }
-    std::unique_ptr<ExtrapolationModel> ExtrapolationModelProvider::provide(std::vector<Detail::Measurement>&& measurement) {
-        #ifdef HAVE_ARMADILLO
-        return std::make_unique<LinearRegression>(std::move(measurement));
-        #else
-        return std::make_unique<LinearExtrapolation>(std::move(measurement));
-        #endif
-    }
+namespace costmodel {
+std::unique_ptr<ExtrapolationModel> ExtrapolationModelProvider::provide(
+    const std::vector<Detail::Measurement>& measurement) {
+#ifdef HAVE_ARMADILLO
+  return std::make_unique<LinearRegression>(measurement);
+#else
+  return std::make_unique<LinearExtrapolation>(measurement);
+#endif
 }
+std::unique_ptr<ExtrapolationModel> ExtrapolationModelProvider::provide(
+    std::vector<Detail::Measurement>&& measurement) {
+#ifdef HAVE_ARMADILLO
+  return std::make_unique<LinearRegression>(std::move(measurement));
+#else
+  return std::make_unique<LinearExtrapolation>(std::move(measurement));
+#endif
+}
+}  // namespace costmodel

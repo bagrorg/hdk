@@ -24,7 +24,9 @@ class DummyCostModel : public CostModel {
   DummyCostModel(ExecutorDeviceType dt, const HeterogenousConfig& cfg)
       : CostModel({std::make_unique<EmptyDataSource>()}), dt_(dt), cfg_(cfg) {}
 
-    virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo query_info) const {return nullptr;}
+  virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo query_info) const {
+    return nullptr;
+  }
 
  private:
   const ExecutorDeviceType dt_;

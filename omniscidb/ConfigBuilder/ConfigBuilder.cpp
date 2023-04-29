@@ -359,10 +359,11 @@ bool ConfigBuilder::parseCommandLineArgs(int argc,
                              ->default_value(config_->exec.initialize_with_gpu_vendor),
                          "GPU vendor to use for Data Manager initialization. Valid "
                          "values are \"intel\" and \"nvidia\".");
-    
-  opt_desc.add_options()("use-cost-model",
-                         po::value<bool>(&config_->exec.enable_cost_model)->default_value(false),
-                         "Use Cost Model for query execution when it is possible.");
+
+  opt_desc.add_options()(
+      "use-cost-model",
+      po::value<bool>(&config_->exec.enable_cost_model)->default_value(false),
+      "Use Cost Model for query execution when it is possible.");
 
   // opts.filter_pushdown
   opt_desc.add_options()("enable-filter-push-down",

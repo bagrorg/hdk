@@ -30,13 +30,12 @@ struct CaibrationConfig {
 };
 
 struct QueryInfo {
-    AnalyticalTemplate templ;
-    size_t bytes_size;
+  AnalyticalTemplate templ;
+  size_t bytes_size;
 };
 
 struct CostModelConfig {
-    std::unique_ptr<DataSource> data_source;
-    
+  std::unique_ptr<DataSource> data_source;
 };
 
 using TemplatePredictions =
@@ -49,14 +48,17 @@ class CostModel {
   virtual ~CostModel() = default;
 
   virtual void calibrate(const CaibrationConfig& conf);
-  virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo query_info) const = 0;
+  virtual std::unique_ptr<policy::ExecutionPolicy> predict(
+      QueryInfo query_info) const = 0;
 
  protected:
-    size_t getExtrapolatedData(ExecutorDeviceType device, AnalyticalTemplate templ, size_t bytes) const;
+  size_t getExtrapolatedData(ExecutorDeviceType device,
+                             AnalyticalTemplate templ,
+                             size_t bytes) const;
 
   CostModelConfig config_;
 
-    ExtrapolationModelProvider extrapolation_provider_;
+  ExtrapolationModelProvider extrapolation_provider_;
 
   DevicePredictions dp_;
 

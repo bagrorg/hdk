@@ -177,7 +177,9 @@ Executor::Executor(const ExecutorId executor_id,
   update_extension_modules();
 
   cost_model = std::make_shared<costmodel::IterativeCostModel>();
-  cost_model->calibrate({{ ExecutorDeviceType::CPU, ExecutorDeviceType::GPU }});    // TODO maybe get devices list somewhere else?
+  cost_model->calibrate(
+      {{ExecutorDeviceType::CPU,
+        ExecutorDeviceType::GPU}});  // TODO maybe get devices list somewhere else?
 }
 
 std::shared_ptr<costmodel::CostModel> Executor::getCostModel() {
@@ -1857,11 +1859,13 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
   }
 
   LOG(DEBUG1) << "Cost Model disabled, or template is unknown: templ="
-              << toString(ra_exe_unit.templ)
-              << " cost_model=" << ra_exe_unit.cost_model << ", cost model in config: "
+              << toString(ra_exe_unit.templ) << " cost_model=" << ra_exe_unit.cost_model
+              << ", cost model in config: "
               << (config_->exec.enable_cost_model ? "enabled" : "disabled")
-              << ", heterogeneous execution: " << cfg.enable_heterogeneous_execution ? "enabled" : "disabled";
-  
+              << ", heterogeneous execution: " << cfg.enable_heterogeneous_execution
+      ? "enabled"
+      : "disabled";
+
   if (cfg.enable_heterogeneous_execution) {
     if (cfg.forced_heterogeneous_distribution) {
       std::map<ExecutorDeviceType, unsigned> distribution{
@@ -2195,7 +2199,7 @@ ExecutorDeviceType Executor::getDeviceTypeForTargets(
 }
 
 bool Executor::needFallbackOnCPU(const RelAlgExecutionUnit& ra_exe_unit,
-                                   const ExecutorDeviceType requested_device_type) {
+                                 const ExecutorDeviceType requested_device_type) {
   for (const auto target_expr : ra_exe_unit.target_exprs) {
     const auto agg_info =
         get_target_info(target_expr, getConfig().exec.group_by.bigint_count);

@@ -21,11 +21,13 @@
 #include "LinearRegression.h"
 #endif
 
-namespace costmodel { 
+namespace costmodel {
 class ExtrapolationModelProvider {
-public:
-    std::unique_ptr<ExtrapolationModel> provide(const std::vector<Detail::Measurement>& measurement);
-    std::unique_ptr<ExtrapolationModel> provide(std::vector<Detail::Measurement>&& measurement);
+ public:
+  std::unique_ptr<ExtrapolationModel> provide(
+      const std::vector<Detail::Measurement>& measurement);
+  std::unique_ptr<ExtrapolationModel> provide(
+      std::vector<Detail::Measurement>&& measurement);
 };
 
-}
+}  // namespace costmodel

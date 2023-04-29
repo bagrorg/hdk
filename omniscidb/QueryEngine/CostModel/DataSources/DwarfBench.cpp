@@ -75,9 +75,9 @@ DwarfBenchDataSource::DwarfBenchDataSource()
           .data_source_name = "DwarfBench",
           .supported_devices = {ExecutorDeviceType::CPU, ExecutorDeviceType::GPU},
           .supported_templates = {AnalyticalTemplate::GroupBy,
-                                 AnalyticalTemplate::Join,
-                                 AnalyticalTemplate::Scan,
-                                 AnalyticalTemplate::Sort}})
+                                  AnalyticalTemplate::Join,
+                                  AnalyticalTemplate::Scan,
+                                  AnalyticalTemplate::Sort}})
     , pimpl_(new PrivateImpl()) {}
 
 DwarfBenchDataSource::~DwarfBenchDataSource() = default;

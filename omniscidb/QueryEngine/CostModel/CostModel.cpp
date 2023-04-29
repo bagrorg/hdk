@@ -20,8 +20,7 @@
 
 namespace costmodel {
 
-CostModel::CostModel(CostModelConfig config)
-    : config_(std::move(config)) {
+CostModel::CostModel(CostModelConfig config) : config_(std::move(config)) {
   for (AnalyticalTemplate templ : templates_) {
     if (!config_.data_source->isTemplateSupported(templ))
       throw CostModelException("template " + templateToString(templ) +
@@ -53,7 +52,8 @@ void CostModel::calibrate(const CaibrationConfig& conf) {
 
     for (auto& template_measurement : dm_entry.second) {
       AnalyticalTemplate templ = template_measurement.first;
-      dp_[device][templ] = extrapolation_provider_.provide(std::move(template_measurement.second));
+      dp_[device][templ] =
+          extrapolation_provider_.provide(std::move(template_measurement.second));
     }
   }
 }
@@ -63,20 +63,19 @@ size_t CostModel::getExtrapolatedData(ExecutorDeviceType device,
                                       size_t bytes) const {
   auto device_measurements_it = dp_.find(device);
   if (device_measurements_it == dp_.end()) {
-    throw CostModelException("there is no " + deviceToString(device) + " in measured data");
+    throw CostModelException("there is no " + deviceToString(device) +
+                             " in measured data");
   }
 
   auto model_it = device_measurements_it->second.find(templ);
   if (model_it == device_measurements_it->second.end()) {
-    throw CostModelException("there is no " + templateToString(templ) + " in measured data for " + deviceToString(device));
+    throw CostModelException("there is no " + templateToString(templ) +
+                             " in measured data for " + deviceToString(device));
   }
 
   return model_it->second->getExtrapolatedData(bytes);
 }
 
-const std::vector<AnalyticalTemplate> CostModel::templates_ = {Scan,
-                                                               Sort,
-                                                               Join,
-                                                               GroupBy};
+const std::vector<AnalyticalTemplate> CostModel::templates_ = {Scan, Sort, Join, GroupBy};
 
 }  // namespace costmodel
