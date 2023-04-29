@@ -1810,7 +1810,7 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
                                        const ExecutorDeviceType requested_device_type,
                                        const std::vector<InputTableInfo>& query_infos,
                                        size_t& max_groups_buffer_entry_guess) {
-  if (isDevicesRestricted(ra_exe_unit, requested_device_type)) {
+  if (needFallbackOnCPU(ra_exe_unit, requested_device_type)) {
     LOG(DEBUG1) << "Devices Restricted, falling back on CPU";
     return {std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(
                 ExecutorDeviceType::CPU),
@@ -2189,12 +2189,12 @@ void Executor::addTransientStringLiterals(
 ExecutorDeviceType Executor::getDeviceTypeForTargets(
     const RelAlgExecutionUnit& ra_exe_unit,
     const ExecutorDeviceType requested_device_type) {
-  if (isDevicesRestricted(ra_exe_unit, requested_device_type))
+  if (needFallbackOnCPU(ra_exe_unit, requested_device_type))
     return ExecutorDeviceType::CPU;
   return requested_device_type;
 }
 
-bool Executor::isDevicesRestricted(const RelAlgExecutionUnit& ra_exe_unit,
+bool Executor::needFallbackOnCPU(const RelAlgExecutionUnit& ra_exe_unit,
                                    const ExecutorDeviceType requested_device_type) {
   for (const auto target_expr : ra_exe_unit.target_exprs) {
     const auto agg_info =
