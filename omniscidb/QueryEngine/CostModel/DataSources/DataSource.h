@@ -22,9 +22,9 @@
 namespace costmodel {
 
 struct DataSourceConfig {
-  std::string dataSourceName;
-  std::set<ExecutorDeviceType> supportedDevices;
-  std::set<AnalyticalTemplate> supportedTemplates;
+  std::string data_source_name;
+  std::set<ExecutorDeviceType> supported_devices;
+  std::set<AnalyticalTemplate> supported_templates;
 };
 
 class DataSource {
@@ -44,7 +44,7 @@ class DataSource {
 
  private:
   DataSourceConfig config_;
-  std::string dataSourceName_;
+  std::string data_source_name_;
 };
 
 class DataSourceException : public std::runtime_error {

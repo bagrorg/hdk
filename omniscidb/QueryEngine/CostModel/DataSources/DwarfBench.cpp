@@ -72,9 +72,9 @@ std::vector<Detail::Measurement> DwarfBenchDataSource::PrivateImpl::convertMeasu
 
 DwarfBenchDataSource::DwarfBenchDataSource()
     : DataSource(DataSourceConfig{
-          .dataSourceName = "DwarfBench",
-          .supportedDevices = {ExecutorDeviceType::CPU, ExecutorDeviceType::GPU},
-          .supportedTemplates = {AnalyticalTemplate::GroupBy,
+          .data_source_name = "DwarfBench",
+          .supported_devices = {ExecutorDeviceType::CPU, ExecutorDeviceType::GPU},
+          .supported_templates = {AnalyticalTemplate::GroupBy,
                                  AnalyticalTemplate::Join,
                                  AnalyticalTemplate::Scan,
                                  AnalyticalTemplate::Sort}})
@@ -102,18 +102,18 @@ std::vector<Detail::Measurement> DwarfBenchDataSource::measureTemplateOnDevice(
     ExecutorDeviceType device,
     AnalyticalTemplate templ) {
   std::vector<Detail::Measurement> ms;
-  for (size_t inputSize : dwarfBenchInputSizes_) {
+  for (size_t input_size : dwarf_bench_input_sizes_) {
     DwarfBench::RunConfig rc = {
         .device = pimpl_->convertDeviceType(device),
-        .inputSize = inputSize,
-        .iterations = dwarfBenchIterations_,
+        .inputSize = input_size,
+        .iterations = dwarf_bench_iterations_,
         .dwarf = pimpl_->convertToDwarf(templ),
     };
 
-    std::vector<Detail::Measurement> inputSizeMeasurements =
+    std::vector<Detail::Measurement> input_size_measurements =
         pimpl_->convertMeasurement(pimpl_->db.makeMeasurements(rc));
 
-    ms.insert(ms.end(), inputSizeMeasurements.begin(), inputSizeMeasurements.end());
+    ms.insert(ms.end(), input_size_measurements.begin(), input_size_measurements.end());
   }
 
   return ms;

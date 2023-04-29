@@ -16,33 +16,33 @@ IterativeCostModel::IterativeCostModel() : CostModel({std::make_unique<EmptyData
 #endif
 
 std::unique_ptr<policy::ExecutionPolicy> IterativeCostModel::predict(
-    QueryInfo queryInfo) const {
+    QueryInfo query_info) const {
         std::shared_lock<std::shared_mutex> l(latch_);
 
-    unsigned cpuProp, gpuProp;
-    size_t optStep = std::ceil(static_cast<float>(queryInfo.bytesSize) / optimizationIterations);
-    size_t runtimePrediction = std::numeric_limits<size_t>::max();
+    unsigned cpu_prop, gpu_prop;
+    size_t opt_step = std::ceil(static_cast<float>(query_info.bytes_size) / optimization_iterations_);
+    size_t runtime_prediction = std::numeric_limits<size_t>::max();
 
-    for (size_t curSize = 0; curSize < queryInfo.bytesSize; curSize += optStep) {
-        size_t cpuSize = curSize;
-        size_t gpuSize = queryInfo.bytesSize - curSize;
+    for (size_t cur_size = 0; cur_size < query_info.bytes_size; cur_size += opt_step) {
+        size_t cpu_size = cur_size;
+        size_t gpu_size = query_info.bytes_size - cur_size;
         
-        size_t cpuPrediction = getExtrapolatedData(ExecutorDeviceType::CPU, queryInfo.templ, cpuSize);
-        size_t gpuPrediction = getExtrapolatedData(ExecutorDeviceType::GPU, queryInfo.templ, gpuSize);
-        size_t curPrediction = std::max(gpuPrediction, cpuPrediction);
+        size_t cpu_prediction = getExtrapolatedData(ExecutorDeviceType::CPU, query_info.templ, cpu_size);
+        size_t gpu_prediction = getExtrapolatedData(ExecutorDeviceType::GPU, query_info.templ, gpu_size);
+        size_t cur_prediction = std::max(gpu_prediction, cpu_prediction);
 
-        if (curPrediction < runtimePrediction) {
-            runtimePrediction = curPrediction;
+        if (cur_prediction < runtime_prediction) {
+            runtime_prediction = cur_prediction;
 
-            cpuProp = static_cast<float>(cpuSize) / queryInfo.bytesSize * 10;
-            gpuProp = 10 - cpuProp;
+            cpu_prop = static_cast<float>(cpu_size) / query_info.bytes_size * 10;
+            gpu_prop = 10 - cpu_prop;
         }
     }
 
     std::map<ExecutorDeviceType, unsigned> proportion;
     
-    proportion[ExecutorDeviceType::GPU] = gpuProp;
-    proportion[ExecutorDeviceType::CPU] = cpuProp;
+    proportion[ExecutorDeviceType::GPU] = gpu_prop;
+    proportion[ExecutorDeviceType::CPU] = cpu_prop;
     
 
     return std::make_unique<policy::ProportionBasedExecutionPolicy>(std::move(proportion));

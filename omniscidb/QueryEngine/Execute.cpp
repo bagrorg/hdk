@@ -1831,7 +1831,7 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
   std::unique_ptr<policy::ExecutionPolicy> exe_policy;
   auto cfg = config_->exec.heterogeneous;
 
-  if (config_->exec.use_cost_model && ra_exe_unit.cost_model != nullptr &&
+  if (config_->exec.enable_cost_model && ra_exe_unit.cost_model != nullptr &&
       ra_exe_unit.templ != costmodel::AnalyticalTemplate::Unknown &&
       cfg.enable_heterogeneous_execution) {
     LOG(DEBUG1) << "Cost Model enabled, making prediction for template "
@@ -1848,7 +1848,7 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
       }
     }
 
-    costmodel::QueryInfo qi = {.templ = ra_exe_unit.templ, .bytesSize = bytes};
+    costmodel::QueryInfo qi = {.templ = ra_exe_unit.templ, .bytes_size = bytes};
 
     // TODO check that template is available for cost model
     exe_policy = ra_exe_unit.cost_model->predict(qi);
@@ -1858,7 +1858,7 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
   LOG(DEBUG1) << "Cost Model disabled, or template is unknown: templ="
               << costmodel::templateToString(ra_exe_unit.templ)
               << " cost_model=" << ra_exe_unit.cost_model << ", cost model in config: "
-              << (config_->exec.use_cost_model ? "enabled" : "disabled")
+              << (config_->exec.enable_cost_model ? "enabled" : "disabled")
               << ", heterogeneous execution: " << cfg.enable_heterogeneous_execution ? "enabled" : "disabled";
   
   if (cfg.enable_heterogeneous_execution) {

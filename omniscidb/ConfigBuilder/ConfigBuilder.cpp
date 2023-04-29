@@ -361,7 +361,7 @@ bool ConfigBuilder::parseCommandLineArgs(int argc,
                          "values are \"intel\" and \"nvidia\".");
     
   opt_desc.add_options()("use-cost-model",
-                         po::value<bool>(&config_->exec.use_cost_model)->default_value(false),
+                         po::value<bool>(&config_->exec.enable_cost_model)->default_value(false),
                          "Use Cost Model for query execution when it is possible.");
 
   // opts.filter_pushdown

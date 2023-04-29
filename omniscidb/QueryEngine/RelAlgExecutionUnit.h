@@ -30,7 +30,6 @@
 #include "RelAlgDagBuilder.h"
 #include "Shared/sqldefs.h"
 #include "Shared/toString.h"
-#include "CostModel/Measurements.h"
 #include "CostModel/CostModel.h"
 
 #include <boost/functional/hash.hpp>
