@@ -1,9 +1,19 @@
 #include "IterativeCostModel.h"
 #include "Dispatchers/ProportionBasedExecutionPolicy.h"
 
+#ifdef HAVE_DWARF_BENCH
+#include "DataSources/DwarfBench.h"
+#endif
+
 #include <cmath>
 
 namespace costmodel {
+
+#ifdef HAVE_DWARF_BENCH
+IterativeCostModel::IterativeCostModel() : CostModel({std::make_unique<DwarfBenchDataSource>()}) {}
+#else
+IterativeCostModel::IterativeCostModel() : CostModel({std::make_unique<EmptyDataSource>()}) {}
+#endif
 
 std::unique_ptr<policy::ExecutionPolicy> IterativeCostModel::predict(
     QueryInfo queryInfo) {

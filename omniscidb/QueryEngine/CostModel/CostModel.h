@@ -34,20 +34,25 @@ struct QueryInfo {
     size_t bytesSize;
 };
 
+struct CostModelConfig {
+    std::unique_ptr<DataSource> dataSource;
+    
+};
+
 using TemplatePredictions =
     std::unordered_map<AnalyticalTemplate, std::unique_ptr<ExtrapolationModel>>;
 using DevicePredictions = std::unordered_map<ExecutorDeviceType, TemplatePredictions>;
 
 class CostModel {
  public:
-  CostModel(std::unique_ptr<DataSource> _dataSource);
+  CostModel(CostModelConfig config);
   virtual ~CostModel() = default;
 
   virtual void calibrate(const CaibrationConfig& conf);
   virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo queryInfo) = 0;
 
  protected:
-  std::unique_ptr<DataSource> dataSource_;
+  CostModelConfig config_;
 
   DevicePredictions dp_;
 

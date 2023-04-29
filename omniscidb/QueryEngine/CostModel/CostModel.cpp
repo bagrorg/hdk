@@ -20,19 +20,19 @@
 
 namespace costmodel {
 
-CostModel::CostModel(std::unique_ptr<DataSource> _dataSource)
-    : dataSource_(std::move(_dataSource)) {
+CostModel::CostModel(CostModelConfig config)
+    : config_(std::move(config)) {
   for (AnalyticalTemplate templ : templates_) {
-    if (!dataSource_->isTemplateSupported(templ))
+    if (!config_.dataSource->isTemplateSupported(templ))
       throw CostModelException("template " + templateToString(templ) +
-                               " not supported in " + dataSource_->getName() +
+                               " not supported in " + config_.dataSource->getName() +
                                " data source");
   }
 
   for (ExecutorDeviceType device : devices_) {
-    if (!dataSource_->isDeviceSupported(device))
+    if (!config_.dataSource->isDeviceSupported(device))
       throw CostModelException("device " + deviceToString(device) + " not supported in " +
-                               dataSource_->getName() + " data source");
+                               config_.dataSource->getName() + " data source");
   }
 }
 
@@ -42,7 +42,7 @@ void CostModel::calibrate(const CaibrationConfig& conf) {
   Detail::DeviceMeasurements dm;
 
   try {
-    dm = dataSource_->getMeasurements(conf.devices, templates_);
+    dm = config_.dataSource->getMeasurements(conf.devices, templates_);
   } catch (const std::exception& e) {
     LOG(ERROR) << "Cost model calibration failure: " << e.what();
     return;
