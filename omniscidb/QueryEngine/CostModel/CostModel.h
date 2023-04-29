@@ -14,7 +14,7 @@
 #pragma once
 
 #include <memory>
-#include <mutex>
+#include <shared_mutex>
 
 #include "DataSources/DataSource.h"
 #include "ExtrapolationModels/ExtrapolationModelProvider.h"
@@ -63,7 +63,7 @@ class CostModel {
   std::vector<ExecutorDeviceType> devices_ = {ExecutorDeviceType::CPU,
                                               ExecutorDeviceType::GPU};
 
-  std::mutex latch_;
+  std::shared_mutex latch_;
 };
 
 class CostModelException : std::runtime_error {

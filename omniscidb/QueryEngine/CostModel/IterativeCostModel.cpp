@@ -17,7 +17,7 @@ IterativeCostModel::IterativeCostModel() : CostModel({std::make_unique<EmptyData
 
 std::unique_ptr<policy::ExecutionPolicy> IterativeCostModel::predict(
     QueryInfo queryInfo) {
-        std::lock_guard<std::mutex> l(latch_);
+        std::shared_lock<std::shared_mutex> l(latch_);
 
     unsigned cpuProp, gpuProp;
     size_t optStep = std::ceil(static_cast<float>(queryInfo.bytesSize) / optimizationIterations);

@@ -37,7 +37,7 @@ CostModel::CostModel(CostModelConfig config)
 }
 
 void CostModel::calibrate(const CaibrationConfig& conf) {
-  std::lock_guard<std::mutex> g{latch_};
+  std::unique_lock<std::shared_mutex> l(latch_);
 
   Detail::DeviceMeasurements dm;
 
