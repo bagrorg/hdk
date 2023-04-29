@@ -52,6 +52,8 @@
 #include <functional>
 #include <numeric>
 
+#include "QueryEngine/Visitors/LogVisitor.h"
+
 using namespace std::string_literals;
 
 size_t g_estimator_failure_max_groupby_size{256000000};
@@ -1509,14 +1511,13 @@ RelAlgExecutor::WorkUnit RelAlgExecutor::createWorkUnit(const hdk::ir::Node* nod
 
   target_exprs_owned_ = builder.releaseTargetExprsOwned();
 
+  templVisitor.visit(node);
+  std::vector<costmodel::AnalyticalTemplate> templates = templVisitor.getTemplates();
+  for (auto templ: templates)
+    LOG(DEBUG1) << "LOG NODE TEMPL: " << toString(templ);
+
+  rewritten_exe_unit.templs = templates;
   rewritten_exe_unit.cost_model = executor_->getCostModel();
-  if (dynamic_cast<const hdk::ir::Sort*>(node)) {
-    rewritten_exe_unit.templ = costmodel::AnalyticalTemplate::Sort;
-  } else if (dynamic_cast<const hdk::ir::Aggregate*>(node)) {
-    rewritten_exe_unit.templ = costmodel::AnalyticalTemplate::GroupBy;
-  } else if (dynamic_cast<const hdk::ir::Join*>(node)) {
-    rewritten_exe_unit.templ = costmodel::AnalyticalTemplate::Join;
-  }
 
   return {rewritten_exe_unit,
           node,

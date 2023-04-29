@@ -56,7 +56,7 @@ class DataSourceException : public std::runtime_error {
 class UnsupportedAnalyticalTemplate : public DataSourceException {
  public:
   UnsupportedAnalyticalTemplate(AnalyticalTemplate templ)
-      : DataSourceException("unsupported template: " + templateToString(templ)){};
+      : DataSourceException("unsupported template: " + toString(templ)){};
 };
 
 class UnsupportedDevice : public DataSourceException {

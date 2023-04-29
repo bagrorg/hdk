@@ -30,7 +30,7 @@ struct CaibrationConfig {
 };
 
 struct QueryInfo {
-  AnalyticalTemplate templ;
+  std::vector<AnalyticalTemplate> templs;
   size_t bytes_size;
 };
 
@@ -39,7 +39,7 @@ struct CostModelConfig {
 };
 
 using TemplatePredictions =
-    std::unordered_map<AnalyticalTemplate, std::unique_ptr<ExtrapolationModel>>;
+    std::unordered_map<AnalyticalTemplate, std::shared_ptr<ExtrapolationModel>>;
 using DevicePredictions = std::unordered_map<ExecutorDeviceType, TemplatePredictions>;
 
 class CostModel {
@@ -52,9 +52,14 @@ class CostModel {
       QueryInfo query_info) const = 0;
 
  protected:
-  size_t getExtrapolatedData(ExecutorDeviceType device,
-                             AnalyticalTemplate templ,
-                             size_t bytes) const;
+  struct DeviceExtrapolations {
+    ExecutorDeviceType device;
+    std::vector<std::shared_ptr<ExtrapolationModel>> extrapolations;
+  };
+
+  std::vector<DeviceExtrapolations> getExtrapolations(
+      const std::vector<ExecutorDeviceType>& devices,
+      const std::vector<AnalyticalTemplate>& templs) const;
 
   CostModelConfig config_;
 

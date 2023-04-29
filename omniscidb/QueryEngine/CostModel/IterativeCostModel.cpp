@@ -26,14 +26,26 @@ std::unique_ptr<policy::ExecutionPolicy> IterativeCostModel::predict(
       std::ceil(static_cast<float>(query_info.bytes_size) / optimization_iterations_);
   size_t runtime_prediction = std::numeric_limits<size_t>::max();
 
+  std::vector<DeviceExtrapolations> devices_extrapolations = getExtrapolations(
+      {ExecutorDeviceType::CPU, ExecutorDeviceType::GPU}, query_info.templs);
+
   for (size_t cur_size = 0; cur_size < query_info.bytes_size; cur_size += opt_step) {
     size_t cpu_size = cur_size;
     size_t gpu_size = query_info.bytes_size - cur_size;
 
-    size_t cpu_prediction =
-        getExtrapolatedData(ExecutorDeviceType::CPU, query_info.templ, cpu_size);
-    size_t gpu_prediction =
-        getExtrapolatedData(ExecutorDeviceType::GPU, query_info.templ, gpu_size);
+    size_t cpu_prediction = 0;
+    size_t gpu_prediction = 0;
+
+    for (DeviceExtrapolations dev_extrapolations : devices_extrapolations) {
+      for (auto extrapolation : dev_extrapolations.extrapolations) {
+        if (dev_extrapolations.device == ExecutorDeviceType::CPU) {
+          cpu_prediction += extrapolation->getExtrapolatedData(cpu_size);
+        } else if (dev_extrapolations.device == ExecutorDeviceType::GPU) {
+          gpu_prediction += extrapolation->getExtrapolatedData(gpu_size);
+        }
+      }
+    }
+
     size_t cur_prediction = std::max(gpu_prediction, cpu_prediction);
 
     if (cur_prediction < runtime_prediction) {

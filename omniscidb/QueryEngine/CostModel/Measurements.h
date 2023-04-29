@@ -25,7 +25,7 @@ namespace costmodel {
 // TODO: add templates
 enum AnalyticalTemplate { GroupBy, Scan, Join, Reduce, Sort, Unknown };
 
-std::string templateToString(AnalyticalTemplate templ);
+std::string toString(AnalyticalTemplate templ);
 
 namespace Detail {
 

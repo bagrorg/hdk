@@ -145,7 +145,7 @@ struct RelAlgExecutionUnit {
   const std::optional<bool> union_all;
 
   std::shared_ptr<costmodel::CostModel> cost_model;
-  costmodel::AnalyticalTemplate templ = costmodel::AnalyticalTemplate::Unknown;
+  std::vector<costmodel::AnalyticalTemplate> templs;
 };
 
 std::ostream& operator<<(std::ostream& os, const RelAlgExecutionUnit& ra_exe_unit);

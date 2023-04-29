@@ -1610,7 +1610,9 @@ RelAlgExecutionUnit replace_scan_limit(const RelAlgExecutionUnit& ra_exe_unit_in
           ra_exe_unit_in.query_plan_dag,
           ra_exe_unit_in.hash_table_build_plan_dag,
           ra_exe_unit_in.table_id_to_node_map,
-          ra_exe_unit_in.union_all};
+          ra_exe_unit_in.union_all,
+          ra_exe_unit_in.cost_model,
+          ra_exe_unit_in.templs};
 }
 
 }  // namespace
@@ -1834,8 +1836,7 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
   auto cfg = config_->exec.heterogeneous;
 
   if (config_->exec.enable_cost_model && ra_exe_unit.cost_model != nullptr &&
-      ra_exe_unit.templ != costmodel::AnalyticalTemplate::Unknown &&
-      cfg.enable_heterogeneous_execution) {
+      cfg.enable_heterogeneous_execution && !ra_exe_unit.templs.empty()) {
     size_t bytes = 0;
 
     // TODO how can we get bytes estimation more correctly?
@@ -1848,18 +1849,18 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
       }
     }
 
-    LOG(DEBUG1) << "Cost Model enabled, making prediction for template "
-                << toString(ra_exe_unit.templ) << " for size " << bytes;
+    LOG(DEBUG1) << "Cost Model enabled, making prediction for templates "
+                << toString(ra_exe_unit.templs) << " for size " << bytes;
 
-    costmodel::QueryInfo qi = {.templ = ra_exe_unit.templ, .bytes_size = bytes};
+    costmodel::QueryInfo qi = {.templs = ra_exe_unit.templs, .bytes_size = bytes};
 
     // TODO check that template is available for cost model
     exe_policy = ra_exe_unit.cost_model->predict(qi);
     return {std::move(exe_policy), requested_device_type};
   }
 
-  LOG(DEBUG1) << "Cost Model disabled, or template is unknown: templ="
-              << toString(ra_exe_unit.templ) << " cost_model=" << ra_exe_unit.cost_model
+  LOG(DEBUG1) << "Cost Model disabled, or template is unknown: templs="
+              << toString(ra_exe_unit.templs) << " cost_model=" << ra_exe_unit.cost_model
               << ", cost model in config: "
               << (config_->exec.enable_cost_model ? "enabled" : "disabled")
               << ", heterogeneous execution: " << cfg.enable_heterogeneous_execution

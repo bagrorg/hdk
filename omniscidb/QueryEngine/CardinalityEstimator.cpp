@@ -94,7 +94,9 @@ RelAlgExecutionUnit create_count_all_execution_unit(
           ra_exe_unit.query_plan_dag,
           ra_exe_unit.hash_table_build_plan_dag,
           ra_exe_unit.table_id_to_node_map,
-          ra_exe_unit.union_all};
+          ra_exe_unit.union_all,
+          ra_exe_unit.cost_model,
+          {}};    // TODO am i right?
 }
 
 ResultSetPtr reduce_estimator_results(
