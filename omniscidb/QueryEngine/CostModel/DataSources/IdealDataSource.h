@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2022 Intel Corporation
+    Copyright (c) 2023 Intel Corporation
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -13,26 +13,29 @@
 
 #pragma once
 
-#include "CostModel.h"
-#include "DataSources/EmptyDataSource.h"
-#include "Shared/Config.h"
+#include <set>
+#include <string>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+
+#include "DataSource.h"
 
 namespace costmodel {
 
-class IterativeCostModel : public CostModel {
+// This is a temporary implementation while there is no
+// library for interaction in dwarf bench
+class IdealDataSource : public DataSource {
  public:
-  IterativeCostModel();
-  IterativeCostModel(CostModelConfig config) : CostModel(std::move(config)) {}
+  IdealDataSource();
 
-  virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo query_info) const;
-
-  std::pair<size_t, size_t> getProportion() const;
+  Detail::DeviceMeasurements getMeasurements(
+      const std::vector<ExecutorDeviceType>& devices,
+      const std::vector<AnalyticalTemplate>& templates) override;
 
  private:
-  static constexpr size_t optimization_iterations_ = 258;
-
-  mutable size_t saved_gpu_prop_;
-  mutable size_t saved_cpu_prop_;
+  Detail::DeviceMeasurements measurements_;
+  const std::string path = "/home/bagrorg/.cache/ideal_data/ideal_data.csv";
 };
 
 }  // namespace costmodel

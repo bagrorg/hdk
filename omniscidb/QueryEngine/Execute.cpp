@@ -74,6 +74,7 @@
 #include "ThirdParty/robin_hood.h"
 
 #include "CostModel/IterativeCostModel.h"
+#include "CostModel/DataSources/IdealDataSource.h"
 
 using namespace std::string_literals;
 
@@ -176,7 +177,14 @@ Executor::Executor(const ExecutorId executor_id,
   Executor::initialize_extension_module_sources();
   update_extension_modules();
 
-  cost_model = std::make_shared<costmodel::IterativeCostModel>();
+  if (config_->exec.enable_ideal_data) {
+    std::unique_ptr<costmodel::DataSource> ds = std::make_unique<costmodel::IdealDataSource>();
+    cost_model = std::make_shared<costmodel::IterativeCostModel>(costmodel::CostModelConfig{std::move(ds)});
+    LOG(DEBUG1) << "BAGRORG: Enabled ideal data source";
+  } else {  
+    cost_model = std::make_shared<costmodel::IterativeCostModel>();
+    LOG(DEBUG1) << "BAGRORG: Enabled default data source";
+  }
   cost_model->calibrate(
       {{ExecutorDeviceType::CPU,
         ExecutorDeviceType::GPU}});  // TODO maybe get devices list somewhere else?
@@ -1849,17 +1857,23 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
       }
     }
 
-    LOG(DEBUG1) << "Cost Model enabled, making prediction for templates "
+    LOG(DEBUG1) << "BAGRORG: Cost Model enabled, making prediction for templates "
                 << toString(ra_exe_unit.templs) << " for size " << bytes;
 
     costmodel::QueryInfo qi = {.templs = ra_exe_unit.templs, .bytes_size = bytes};
 
     // TODO check that template is available for cost model
     exe_policy = ra_exe_unit.cost_model->predict(qi);
+
+    if (auto cm = std::dynamic_pointer_cast<costmodel::IterativeCostModel>(ra_exe_unit.cost_model)) {
+      auto [gpu, cpu] = cm->getProportion();
+      LOG(DEBUG1) << "BAGRORG: GOT PROPORTION GPU=" << gpu <<", CPU=" << cpu;
+    }
+
     return {std::move(exe_policy), requested_device_type};
   }
 
-  LOG(DEBUG1) << "Cost Model disabled, or template is unknown: templs="
+  LOG(DEBUG1) << "BAGRORG: Cost Model disabled, or template is unknown: templs="
               << toString(ra_exe_unit.templs) << " cost_model=" << ra_exe_unit.cost_model
               << ", cost model in config: "
               << (config_->exec.enable_cost_model ? "enabled" : "disabled")

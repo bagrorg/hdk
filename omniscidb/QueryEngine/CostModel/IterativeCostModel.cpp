@@ -29,7 +29,7 @@ std::unique_ptr<policy::ExecutionPolicy> IterativeCostModel::predict(
   std::vector<DeviceExtrapolations> devices_extrapolations = getExtrapolations(
       {ExecutorDeviceType::CPU, ExecutorDeviceType::GPU}, query_info.templs);
 
-  for (size_t cur_size = 0; cur_size < query_info.bytes_size; cur_size += opt_step) {
+  for (size_t cur_size = 0; cur_size <= query_info.bytes_size; cur_size += opt_step) {
     size_t cpu_size = cur_size;
     size_t gpu_size = query_info.bytes_size - cur_size;
 
@@ -61,6 +61,15 @@ std::unique_ptr<policy::ExecutionPolicy> IterativeCostModel::predict(
   proportion[ExecutorDeviceType::GPU] = gpu_prop;
   proportion[ExecutorDeviceType::CPU] = cpu_prop;
 
+  saved_gpu_prop_ = gpu_prop;
+  saved_cpu_prop_ = cpu_prop;
+
   return std::make_unique<policy::ProportionBasedExecutionPolicy>(std::move(proportion));
 }
+
+std::pair<size_t, size_t> IterativeCostModel::getProportion() const {
+  return std::pair<size_t, size_t>(saved_gpu_prop_, saved_cpu_prop_);
+}
+
+
 }  // namespace costmodel
