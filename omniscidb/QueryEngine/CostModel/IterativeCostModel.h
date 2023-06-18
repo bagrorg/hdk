@@ -17,6 +17,8 @@
 #include "DataSources/EmptyDataSource.h"
 #include "Shared/Config.h"
 
+#include <unordered_map>
+
 namespace costmodel {
 
 class IterativeCostModel : public CostModel {
@@ -27,7 +29,9 @@ class IterativeCostModel : public CostModel {
   virtual std::unique_ptr<policy::ExecutionPolicy> predict(QueryInfo query_info) const;
 
  private:
-  static constexpr size_t optimization_iterations_ = 1024;
+  static constexpr size_t optimization_iterations_ = 10;
+
+  mutable std::unordered_map<std::pair<size_t, size_t>, double> preds;
 };
 
 }  // namespace costmodel

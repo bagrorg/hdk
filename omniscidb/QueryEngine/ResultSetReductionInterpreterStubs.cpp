@@ -187,7 +187,7 @@ StubGenerator::Stub StubGenerator::generateStub(const std::string& name,
                                                 const Type ret_type,
                                                 const bool is_external,
                                                 const Executor* executor) {
-  CompilationOptions co{
+  CompilationOptions co{228.0,
       ExecutorDeviceType::CPU, false, ExecutorOptLevel::ReductionJIT, false};
   co.codegen_traits_desc = co.getCgenTraitsDesc(ExecutorDeviceType::CPU);
   // Multiple executors may trigger the generation of the same

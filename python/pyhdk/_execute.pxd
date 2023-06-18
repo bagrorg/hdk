@@ -44,6 +44,7 @@ cdef extern from "omniscidb/QueryEngine/CompilationOptions.h":
     MultifragmentKernel "ExecutorDispatchMode::MultifragmentKernel",
 
   cdef cppclass CCompilationOptions "CompilationOptions":
+    float step
     CExecutorDeviceType device_type
     bool hoist_literals
     CExecutorOptLevel opt_level

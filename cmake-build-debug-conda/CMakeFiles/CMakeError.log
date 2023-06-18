@@ -1,0 +1,66 @@
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/bagrorg/Documents/thesis/hdk/cmake-build-debug-conda/CMakeFiles/CMakeScratch/TryCompile-k2Kd8i
+
+Run Build Command(s):/home/bagrorg/anaconda3/envs/omnisci-dev/bin/make -f Makefile cmTC_a37c6/fast && /home/bagrorg/anaconda3/envs/omnisci-dev/bin/make  -f CMakeFiles/cmTC_a37c6.dir/build.make CMakeFiles/cmTC_a37c6.dir/build
+make[1]: Entering directory '/home/bagrorg/Documents/thesis/hdk/cmake-build-debug-conda/CMakeFiles/CMakeScratch/TryCompile-k2Kd8i'
+Building C object CMakeFiles/cmTC_a37c6.dir/src.c.o
+/home/bagrorg/anaconda3/envs/omnisci-dev/bin/clang -DCMAKE_HAVE_LIBC_PTHREAD  -fcolor-diagnostics -MD -MT CMakeFiles/cmTC_a37c6.dir/src.c.o -MF CMakeFiles/cmTC_a37c6.dir/src.c.o.d -o CMakeFiles/cmTC_a37c6.dir/src.c.o -c /home/bagrorg/Documents/thesis/hdk/cmake-build-debug-conda/CMakeFiles/CMakeScratch/TryCompile-k2Kd8i/src.c
+Linking C executable cmTC_a37c6
+/home/bagrorg/anaconda3/envs/omnisci-dev/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a37c6.dir/link.txt --verbose=1
+/home/bagrorg/anaconda3/envs/omnisci-dev/bin/clang CMakeFiles/cmTC_a37c6.dir/src.c.o -o cmTC_a37c6 
+/home/bagrorg/anaconda3/envs/omnisci-dev/bin/ld: CMakeFiles/cmTC_a37c6.dir/src.c.o: in function `main':
+src.c:(.text+0x25): undefined reference to `pthread_create'
+/home/bagrorg/anaconda3/envs/omnisci-dev/bin/ld: src.c:(.text+0x2e): undefined reference to `pthread_detach'
+/home/bagrorg/anaconda3/envs/omnisci-dev/bin/ld: src.c:(.text+0x37): undefined reference to `pthread_cancel'
+/home/bagrorg/anaconda3/envs/omnisci-dev/bin/ld: src.c:(.text+0x44): undefined reference to `pthread_join'
+/home/bagrorg/anaconda3/envs/omnisci-dev/bin/ld: src.c:(.text+0x53): undefined reference to `pthread_atfork'
+clang-14: error: linker command failed with exit code 1 (use -v to see invocation)
+make[1]: *** [CMakeFiles/cmTC_a37c6.dir/build.make:100: cmTC_a37c6] Error 1
+make[1]: Leaving directory '/home/bagrorg/Documents/thesis/hdk/cmake-build-debug-conda/CMakeFiles/CMakeScratch/TryCompile-k2Kd8i'
+make: *** [Makefile:127: cmTC_a37c6/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+static void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/bagrorg/Documents/thesis/hdk/cmake-build-debug-conda/CMakeFiles/CMakeScratch/TryCompile-XE6G16
+
+Run Build Command(s):/home/bagrorg/anaconda3/envs/omnisci-dev/bin/make -f Makefile cmTC_87b76/fast && /home/bagrorg/anaconda3/envs/omnisci-dev/bin/make  -f CMakeFiles/cmTC_87b76.dir/build.make CMakeFiles/cmTC_87b76.dir/build
+make[1]: Entering directory '/home/bagrorg/Documents/thesis/hdk/cmake-build-debug-conda/CMakeFiles/CMakeScratch/TryCompile-XE6G16'
+Building C object CMakeFiles/cmTC_87b76.dir/CheckFunctionExists.c.o
+/home/bagrorg/anaconda3/envs/omnisci-dev/bin/clang   -DCHECK_FUNCTION_EXISTS=pthread_create -fcolor-diagnostics -MD -MT CMakeFiles/cmTC_87b76.dir/CheckFunctionExists.c.o -MF CMakeFiles/cmTC_87b76.dir/CheckFunctionExists.c.o.d -o CMakeFiles/cmTC_87b76.dir/CheckFunctionExists.c.o -c /home/bagrorg/Documents/thesis/hdk/cmake-build-debug-conda/CMakeFiles/CMakeScratch/TryCompile-XE6G16/CheckFunctionExists.c
+Linking C executable cmTC_87b76
+/home/bagrorg/anaconda3/envs/omnisci-dev/bin/cmake -E cmake_link_script CMakeFiles/cmTC_87b76.dir/link.txt --verbose=1
+/home/bagrorg/anaconda3/envs/omnisci-dev/bin/clang  -DCHECK_FUNCTION_EXISTS=pthread_create CMakeFiles/cmTC_87b76.dir/CheckFunctionExists.c.o -o cmTC_87b76  -lpthreads 
+/home/bagrorg/anaconda3/envs/omnisci-dev/bin/ld: cannot find -lpthreads: No such file or directory
+clang-14: error: linker command failed with exit code 1 (use -v to see invocation)
+make[1]: *** [CMakeFiles/cmTC_87b76.dir/build.make:100: cmTC_87b76] Error 1
+make[1]: Leaving directory '/home/bagrorg/Documents/thesis/hdk/cmake-build-debug-conda/CMakeFiles/CMakeScratch/TryCompile-XE6G16'
+make: *** [Makefile:127: cmTC_87b76/fast] Error 2
+
+
+
+Checking whether the CUDA compiler is NVIDIA using "" did not match "nvcc: NVIDIA \(R\) Cuda compiler driver":
+Checking whether the CUDA compiler is Clang using "" did not match "(clang version)":
+Checking whether the CUDA compiler is NVIDIA using "" did not match "nvcc: NVIDIA \(R\) Cuda compiler driver":
+Checking whether the CUDA compiler is Clang using "" did not match "(clang version)":

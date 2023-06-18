@@ -364,7 +364,7 @@ std::vector<llvm::Value*> CodeGenerator::codegenOuterJoinNullPlaceholder(
   const auto null_target_lvs =
       codegen(null_constant.get(),
               false,
-              CompilationOptions{
+              CompilationOptions{228.0,
                   ExecutorDeviceType::CPU, false, ExecutorOptLevel::Default, false});
   cgen_state_->ir_builder_.CreateBr(phi_bb);
   CHECK_EQ(orig_lvs.size(), null_target_lvs.size());

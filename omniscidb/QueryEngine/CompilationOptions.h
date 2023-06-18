@@ -36,6 +36,7 @@ enum class ExecutorExplainType { Default, Optimized };
 enum class ExecutorDispatchMode { KernelPerFragment, MultifragmentKernel };
 
 struct CompilationOptions {
+  float step;
   ExecutorDeviceType device_type;
   bool hoist_literals;
   ExecutorOptLevel opt_level;
@@ -49,7 +50,8 @@ struct CompilationOptions {
   compiler::CodegenTraitsDescriptor codegen_traits_desc{};
 
   static CompilationOptions makeCpuOnly(const CompilationOptions& in) {
-    return CompilationOptions{ExecutorDeviceType::CPU,
+    return CompilationOptions{in.step,
+                              ExecutorDeviceType::CPU,
                               in.hoist_literals,
                               in.opt_level,
                               in.with_dynamic_watchdog,
@@ -76,7 +78,7 @@ struct CompilationOptions {
   static CompilationOptions defaults(
       const ExecutorDeviceType device_type = ExecutorDeviceType::GPU,
       const bool is_l0 = false) {
-    return CompilationOptions{
+    return CompilationOptions{228.0,
         device_type,
         /*hoist_literals=*/true,
         /*opt_level=*/ExecutorOptLevel::Default,

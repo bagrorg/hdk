@@ -365,6 +365,21 @@ bool ConfigBuilder::parseCommandLineArgs(int argc,
       po::value<bool>(&config_->exec.enable_cost_model)->default_value(false),
       "Use Cost Model for query execution when it is possible.");
 
+    opt_desc.add_options()(
+      "use-interesting-data",
+      po::value<bool>(&config_->exec.enable_interesting_data)->default_value(false),
+      "Use Cost Model for query execution when it is possible.");
+    
+    opt_desc.add_options()(
+      "interesing-abs",
+      po::value<size_t>(&config_->exec.abs)->default_value(0),
+      "Use Cost Model for query execution when it is possible.");
+
+    opt_desc.add_options()(
+      "priv-data",
+      po::value<std::string>(&config_->exec.priv_data)->default_value(""),
+      "Use Cost Model for query execution when it is possible.");
+
   // opts.filter_pushdown
   opt_desc.add_options()("enable-filter-push-down",
                          po::value<bool>(&config_->opts.filter_pushdown.enable)

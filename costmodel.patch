@@ -1,0 +1,362 @@
+diff --git a/omniscidb/QueryEngine/CostModel/CostModel.cpp b/omniscidb/QueryEngine/CostModel/CostModel.cpp
+index 3090095b0..b130bd5b7 100644
+--- a/omniscidb/QueryEngine/CostModel/CostModel.cpp
++++ b/omniscidb/QueryEngine/CostModel/CostModel.cpp
+@@ -13,7 +13,10 @@
+ 
+ #include "CostModel.h"
+ #include "ExtrapolationModels/LinearExtrapolation.h"
+-
++#include "DataSources/DwarfBench.h"
++#include "QueryEngine/CostModel/Measurements.h"
++#include "QueryEngine/Dispatchers/DefaultExecutionPolicy.h"
++#include "Shared/DeviceType.h"
+ namespace costmodel {
+ 
+ CostModel::CostModel(std::unique_ptr<DataSource> _dataSource)
+@@ -55,9 +58,29 @@ void CostModel::calibrate(const CaibrationConfig& conf) {
+   }
+ }
+ 
+-const std::vector<AnalyticalTemplate> CostModel::templates = {GroupBy,
+-                                                              Join,
+-                                                              Scan,
+-                                                              Reduce};
++const std::vector<AnalyticalTemplate> CostModel::templates = {Sort};
++
++
++    BinaryCostModel::BinaryCostModel() : CostModel(std::make_unique<DwarfBenchDataSource>()) { calibrate(CaibrationConfig{ {ExecutorDeviceType::CPU, ExecutorDeviceType::GPU} }); logState(); }
++
++
++std::unique_ptr<policy::ExecutionPolicy> BinaryCostModel::predict(AnalyticalTemplate templ, size_t bytes) {
++        LOG(DEBUG1) << "BAGRORG: Predicting execution for " + templateToString(templ);
++        logState();
++        
++        LOG(DEBUG1) << "BAGRORG: CPU SIZE IS " + std::to_string(dp[ExecutorDeviceType::CPU].size()) + ", GPU SIZE IS " + std::to_string(dp[ExecutorDeviceType::GPU].size());
++        LOG(DEBUG1) << "BAGRORG: CPU PTR=" + std::to_string((uint64_t) dp[ExecutorDeviceType::CPU][templ].get());
++        LOG(DEBUG1) << "BAGRORG: GPU PTR=" + std::to_string((uint64_t) dp[ExecutorDeviceType::GPU][templ].get());
++
++        auto cpuPred = dp[ExecutorDeviceType::CPU][templ]->getExtrapolatedData(bytes); 
++        auto gpuPred = dp[ExecutorDeviceType::GPU][templ]->getExtrapolatedData(bytes);
++        ExecutorDeviceType device = cpuPred < gpuPred ? ExecutorDeviceType::CPU : ExecutorDeviceType::GPU;      
++
++        std::unique_ptr<policy::ExecutionPolicy> policy = std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(device);
++
++        return policy;
++    }
++
++
+ 
+ }  // namespace costmodel
+diff --git a/omniscidb/QueryEngine/CostModel/CostModel.h b/omniscidb/QueryEngine/CostModel/CostModel.h
+index bbbe1f2ea..808e288de 100644
+--- a/omniscidb/QueryEngine/CostModel/CostModel.h
++++ b/omniscidb/QueryEngine/CostModel/CostModel.h
+@@ -23,6 +23,8 @@
+ #include "QueryEngine/CompilationOptions.h"
+ #include "QueryEngine/Descriptors/RelAlgExecutionDescriptor.h"
+ #include "QueryEngine/Dispatchers/ExecutionPolicy.h"
++#include "QueryEngine/Dispatchers/ProportionBasedExecutionPolicy.h"
++#include "Shared/DeviceType.h"
+ 
+ namespace costmodel {
+ 
+@@ -40,8 +42,7 @@ class CostModel {
+   virtual ~CostModel() = default;
+ 
+   virtual void calibrate(const CaibrationConfig& conf);
+-  virtual std::unique_ptr<policy::ExecutionPolicy> predict(
+-      const RelAlgExecutionUnit& queryDag) = 0;
++  virtual std::unique_ptr<policy::ExecutionPolicy> predict(AnalyticalTemplate templ, size_t bytes) = 0;
+ 
+  protected:
+   std::unique_ptr<DataSource> dataSource;
+@@ -62,4 +63,25 @@ class CostModelException : std::runtime_error {
+       : std::runtime_error("CostModel exception: " + msg){};
+ };
+ 
++
++class BinaryCostModel : public CostModel {
++public:
++    BinaryCostModel(); 
++
++
++  virtual std::unique_ptr<policy::ExecutionPolicy> predict(AnalyticalTemplate templ, size_t bytes) override;
++
++    void logState() {
++        std::string log = "Measured dwarfs:\n";
++        for (auto &[key, value]: dp) {
++        log += deviceToString(key) + ":\n";
++            for (auto &[kkey, vvalue]: value) {
++                log += "\t" + templateToString(kkey) + "\n"; 
++            }
++        }
++
++        LOG(DEBUG1) << log;
++    }
++};
++
+ }  // namespace costmodel
+diff --git a/omniscidb/QueryEngine/CostModel/DataSources/DwarfBench.cpp b/omniscidb/QueryEngine/CostModel/DataSources/DwarfBench.cpp
+index cd2f743dc..f2cc04786 100644
+--- a/omniscidb/QueryEngine/CostModel/DataSources/DwarfBench.cpp
++++ b/omniscidb/QueryEngine/CostModel/DataSources/DwarfBench.cpp
+@@ -13,17 +13,19 @@
+ 
+ #include "DwarfBench.h"
+ 
++#include <bench.hpp>
+ #include <fstream>
+ #include <iostream>
++#include "QueryEngine/CostModel/Measurements.h"
+ 
+ namespace costmodel {
+ 
+ DwarfBenchDataSource::DwarfBenchDataSource()
+     : DataSource(DataSourceConfig{.dataSourceName = "DwarfBench",
+-                                  .supportedDevices = {ExecutorDeviceType::CPU},
++                                  .supportedDevices = {ExecutorDeviceType::CPU, ExecutorDeviceType::GPU},
+                                   .supportedTemplates = {AnalyticalTemplate::GroupBy,
+                                                          AnalyticalTemplate::Join,
+-                                                         AnalyticalTemplate::Scan}}) {}
++                                                         AnalyticalTemplate::Scan, AnalyticalTemplate::Sort}}) {}
+ 
+ Detail::DeviceMeasurements DwarfBenchDataSource::getMeasurements(
+     const std::vector<ExecutorDeviceType>& devices,
+@@ -56,6 +58,8 @@ std::vector<Detail::Measurement> DwarfBenchDataSource::measureTemplateOnDevice(
+     std::vector<Detail::Measurement> inputSizeMeasurements =
+         convertMeasurement(db.makeMeasurements(rc));
+ 
++    LOG(DEBUG1) << "BAGRORG: Measured " + std::to_string(inputSize) + " size! Number of measurements " + std::to_string(inputSizeMeasurements.size());
++
+     ms.insert(ms.end(), inputSizeMeasurements.begin(), inputSizeMeasurements.end());
+   }
+ 
+@@ -67,12 +71,16 @@ DwarfBench::Dwarf DwarfBenchDataSource::convertToDwarf(AnalyticalTemplate templ)
+     case AnalyticalTemplate::GroupBy:
+       return DwarfBench::Dwarf::GroupBy;
+     case AnalyticalTemplate::Scan:
+-      return DwarfBench::Dwarf::DPLScan;
++      return DwarfBench::Dwarf::Scan;
+     case AnalyticalTemplate::Join:
+       return DwarfBench::Dwarf::Join;
+     case AnalyticalTemplate::Reduce:
+       throw UnsupportedAnalyticalTemplate(templ);
++    case AnalyticalTemplate::Sort:
++      return DwarfBench::Sort;
+   }
++
++  throw UnsupportedAnalyticalTemplate(templ);
+ }
+ 
+ DwarfBench::DeviceType DwarfBenchDataSource::convertDeviceType(
+diff --git a/omniscidb/QueryEngine/CostModel/DummyCostModel.cpp b/omniscidb/QueryEngine/CostModel/DummyCostModel.cpp
+index 8dad36994..491f6c1f9 100644
+--- a/omniscidb/QueryEngine/CostModel/DummyCostModel.cpp
++++ b/omniscidb/QueryEngine/CostModel/DummyCostModel.cpp
+@@ -18,7 +18,7 @@
+ #include "QueryEngine/Dispatchers/RRExecutionPolicy.h"
+ 
+ namespace costmodel {
+-
++/*
+ std::unique_ptr<policy::ExecutionPolicy> DummyCostModel::predict(
+     const RelAlgExecutionUnit& queryDag) {
+   std::unique_ptr<policy::ExecutionPolicy> exe_policy;
+@@ -37,5 +37,5 @@ std::unique_ptr<policy::ExecutionPolicy> DummyCostModel::predict(
+   }
+   return exe_policy;
+ }
+-
++*/
+ }  // namespace costmodel
+diff --git a/omniscidb/QueryEngine/CostModel/DummyCostModel.h b/omniscidb/QueryEngine/CostModel/DummyCostModel.h
+index cf0cac608..412f38d29 100644
+--- a/omniscidb/QueryEngine/CostModel/DummyCostModel.h
++++ b/omniscidb/QueryEngine/CostModel/DummyCostModel.h
+@@ -24,12 +24,24 @@ class DummyCostModel : public CostModel {
+   DummyCostModel(ExecutorDeviceType dt, const HeterogenousConfig& cfg)
+       : CostModel(std::make_unique<EmptyDataSource>()), dt_(dt), cfg_(cfg) {}
+ 
+-  std::unique_ptr<policy::ExecutionPolicy> predict(
+-      const RelAlgExecutionUnit& queryDag) override;
++//  std::unique_ptr<policy::ExecutionPolicy> predict(
++//      const RelAlgExecutionUnit& queryDag) override;
+ 
+  private:
+   const ExecutorDeviceType dt_;
+   const HeterogenousConfig& cfg_;
+ };
+ 
++class LogCostModel : public CostModel {
++    public:
++        LogCostModel() : CostModel(std::make_unique<EmptyDataSource>()) {}
++
++        
++//      std::unique_ptr<policy::ExecutionPolicy> predict(
++//          const RelAlgExecutionUnit& queryDag) override {
++//        LOG(INFO) << "BAGRORG: Cost model call";
++//        return nullptr;
++//    }
++};
++
+ }  // namespace costmodel
+diff --git a/omniscidb/QueryEngine/CostModel/Measurements.cpp b/omniscidb/QueryEngine/CostModel/Measurements.cpp
+index d701e5deb..08b516225 100644
+--- a/omniscidb/QueryEngine/CostModel/Measurements.cpp
++++ b/omniscidb/QueryEngine/CostModel/Measurements.cpp
+@@ -12,6 +12,8 @@ std::string templateToString(AnalyticalTemplate templ) {
+       return "Scan";
+     case AnalyticalTemplate::Reduce:
+       return "Reduce";
++    case AnalyticalTemplate::Sort:
++      return "Sort";
+     default:
+       return "Unknown";
+   }
+diff --git a/omniscidb/QueryEngine/CostModel/Measurements.h b/omniscidb/QueryEngine/CostModel/Measurements.h
+index 04ae7363d..7df05e6d7 100644
+--- a/omniscidb/QueryEngine/CostModel/Measurements.h
++++ b/omniscidb/QueryEngine/CostModel/Measurements.h
+@@ -28,6 +28,7 @@ enum AnalyticalTemplate {
+   Scan,
+   Join,
+   Reduce,
++  Sort,
+ };
+ 
+ std::string templateToString(AnalyticalTemplate templ);
+diff --git a/omniscidb/QueryEngine/Execute.cpp b/omniscidb/QueryEngine/Execute.cpp
+index 07bf95f50..fe3b264f8 100644
+--- a/omniscidb/QueryEngine/Execute.cpp
++++ b/omniscidb/QueryEngine/Execute.cpp
+@@ -1838,7 +1838,7 @@ TemporaryTable Executor::executeWorkUnitImpl(
+     DataProvider* data_provider,
+     ColumnCacheMap& column_cache) {
+   INJECT_TIMER(Exec_executeWorkUnit);
+-  std::unique_ptr<policy::ExecutionPolicy> exe_policy;
++  std::shared_ptr<policy::ExecutionPolicy> exe_policy;
+   const auto device_type = getDeviceTypeForTargets(ra_exe_unit, co.device_type);
+   LOG(DEBUG1) << "Device type for targets: " << device_type;
+   CHECK(!query_infos.empty());
+@@ -1848,11 +1848,32 @@ TemporaryTable Executor::executeWorkUnitImpl(
+                    "fragment size slots and run on the CPU.";
+     CHECK(device_type == ExecutorDeviceType::CPU);
+     max_groups_buffer_entry_guess = compute_buffer_entry_guess(query_infos);
+-    exe_policy = std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(
++    exe_policy = std::make_shared<policy::FragmentIDAssignmentExecutionPolicy>(
+         ExecutorDeviceType::CPU);
+   } else {
+-    costmodel::DummyCostModel cost_model(device_type, config_->exec.heterogeneous);
+-    exe_policy = cost_model.predict(ra_exe_unit);
++    //    costmodel::DummyCostModel cost_model(device_type, config_->exec.heterogeneous);
++    //    exe_policy = cost_model.predict(ra_exe_unit);
++    if (false/*ra_exe_unit.suggested_policy != nullptr*/) {
++      LOG(DEBUG1) << "BAGRORG: Getting suggested from cost model policy";
++      exe_policy = ra_exe_unit.suggested_policy;
++    } else {
++      LOG(DEBUG1) << "BAGRORG: No suggested cost model policy";
++      auto cfg_ = config_->exec.heterogeneous;
++      if (cfg_.enable_heterogeneous_execution) {
++        if (cfg_.forced_heterogeneous_distribution) {
++          std::map<ExecutorDeviceType, unsigned> distribution{
++              {ExecutorDeviceType::CPU, cfg_.forced_cpu_proportion},
++              {ExecutorDeviceType::GPU, cfg_.forced_gpu_proportion}};
++          exe_policy = std::make_unique<policy::ProportionBasedExecutionPolicy>(
++              std::move(distribution));
++        } else {
++          exe_policy = std::make_unique<policy::RoundRobinExecutionPolicy>();
++        }
++      } else {
++        exe_policy =
++            std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(device_type);
++      }
++    }
+   }
+ 
+   int8_t crt_min_byte_width{MAX_BYTE_WIDTH_SUPPORTED};
+@@ -2166,6 +2187,8 @@ ExecutorDeviceType Executor::getDeviceTypeForTargets(
+       return ExecutorDeviceType::CPU;
+     }
+   }
++  //if (ra_exe_unit.suggested_policy != nullptr)
++  //  return ra_exe_unit.suggested_policy->devices()[0];
+   return requested_device_type;
+ }
+ 
+diff --git a/omniscidb/QueryEngine/RelAlgExecutionUnit.h b/omniscidb/QueryEngine/RelAlgExecutionUnit.h
+index 5bd9989ae..b1992c367 100644
+--- a/omniscidb/QueryEngine/RelAlgExecutionUnit.h
++++ b/omniscidb/QueryEngine/RelAlgExecutionUnit.h
+@@ -30,7 +30,7 @@
+ #include "RelAlgDagBuilder.h"
+ #include "Shared/sqldefs.h"
+ #include "Shared/toString.h"
+-
++#include "Dispatchers/ExecutionPolicy.h"
+ #include <boost/graph/adjacency_list.hpp>
+ 
+ #include <list>
+@@ -141,6 +141,7 @@ struct RelAlgExecutionUnit {
+   TableIdToNodeMap table_id_to_node_map{};
+   // empty if not a UNION, true if UNION ALL, false if regular UNION
+   const std::optional<bool> union_all;
++  std::shared_ptr<policy::ExecutionPolicy> suggested_policy;
+ };
+ 
+ std::ostream& operator<<(std::ostream& os, const RelAlgExecutionUnit& ra_exe_unit);
+diff --git a/omniscidb/QueryEngine/RelAlgExecutor.cpp b/omniscidb/QueryEngine/RelAlgExecutor.cpp
+index 972f21d45..1eb7e82f4 100644
+--- a/omniscidb/QueryEngine/RelAlgExecutor.cpp
++++ b/omniscidb/QueryEngine/RelAlgExecutor.cpp
+@@ -15,10 +15,14 @@
+  */
+ 
+ #include "RelAlgExecutor.h"
++#include "IR/Node.h"
+ #include "IR/TypeUtils.h"
+ #include "QueryEngine/CalciteDeserializerUtils.h"
+ #include "QueryEngine/CardinalityEstimator.h"
+ #include "QueryEngine/ColumnFetcher.h"
++#include "QueryEngine/CostModel/CostModel.h"
++#include "QueryEngine/CostModel/DummyCostModel.h"
++#include "QueryEngine/CostModel/Measurements.h"
+ #include "QueryEngine/EquiJoinCondition.h"
+ #include "QueryEngine/ErrorHandling.h"
+ #include "QueryEngine/ExpressionRewrite.h"
+@@ -1466,6 +1470,14 @@ RelAlgExecutor::WorkUnit RelAlgExecutor::createWorkUnit(const hdk::ir::Node* nod
+ 
+   target_exprs_owned_ = builder.releaseTargetExprsOwned();
+ 
++  if (cost_model_ == nullptr) {
++    cost_model_ = std::make_shared<costmodel::BinaryCostModel>(); 
++  }
++
++  if (dynamic_cast<const hdk::ir::Sort*>(node)) {
++    rewritten_exe_unit.suggested_policy = cost_model_->predict(costmodel::AnalyticalTemplate::Sort, 1024); 
++  }
++
+   return {rewritten_exe_unit,
+           node,
+           builder.maxGroupsBufferEntryGuess(),
+diff --git a/omniscidb/QueryEngine/RelAlgExecutor.h b/omniscidb/QueryEngine/RelAlgExecutor.h
+index f6dfa13a7..0be37b6bb 100644
+--- a/omniscidb/QueryEngine/RelAlgExecutor.h
++++ b/omniscidb/QueryEngine/RelAlgExecutor.h
+@@ -18,6 +18,7 @@
+ #define QUERYENGINE_RELALGEXECUTOR_H
+ 
+ #include "DataProvider/DataProvider.h"
++#include "QueryEngine/CostModel/CostModel.h"
+ #include "QueryEngine/Descriptors/RelAlgExecutionDescriptor.h"
+ #include "QueryEngine/Execute.h"
+ #include "QueryEngine/InputMetadata.h"
+@@ -249,6 +250,8 @@ class RelAlgExecutor {
+ 
+   std::shared_ptr<StreamExecutionContext> stream_execution_context_;
+ 
++  std::shared_ptr<costmodel::CostModel> cost_model_;
++
+   friend class PendingExecutionClosure;
+ };
+ 

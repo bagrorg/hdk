@@ -1,0 +1,14 @@
+/home/bagrorg/anaconda3/envs/omnisci-dev/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/home/bagrorg/anaconda3/envs/omnisci-dev/bin/make -DCMAKE_C_COMPILER=/home/bagrorg/anaconda3/envs/omnisci-dev/bin/clang -DCMAKE_CXX_COMPILER=/home/bagrorg/anaconda3/envs/omnisci-dev/bin/clang++ -DENABLE_CUDA=on -DENABLE_DWARF_BENCH=on -G "CodeBlocks - Unix Makefiles" -S /home/bagrorg/Documents/thesis/hdk -B /home/bagrorg/Documents/thesis/hdk/cmake-build-debug-conda
+-- Boost 1.78.0 found.
+-- Found folly: /home/bagrorg/anaconda3/envs/omnisci-dev
+-- Boost 1.78.0 found.
+-- Dwarf Bench enabled
+CMake Error at /home/bagrorg/anaconda3/envs/omnisci-dev/share/cmake-3.25/Modules/CMakeDetermineCUDACompiler.cmake:277 (message):
+  CMAKE_CUDA_ARCHITECTURES must be non-empty if set.
+Call Stack (most recent call first):
+  CMakeLists.txt:177 (enable_language)
+
+
+-- Configuring incomplete, errors occurred!
+See also "/home/bagrorg/Documents/thesis/hdk/cmake-build-debug-conda/CMakeFiles/CMakeOutput.log".
+See also "/home/bagrorg/Documents/thesis/hdk/cmake-build-debug-conda/CMakeFiles/CMakeError.log".

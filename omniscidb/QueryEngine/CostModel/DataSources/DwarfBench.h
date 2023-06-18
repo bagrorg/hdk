@@ -38,14 +38,22 @@ class DwarfBenchDataSource : public DataSource {
       const std::vector<AnalyticalTemplate>& templates) override;
 
  private:
+
+  Detail::DeviceMeasurements readCache();
+  void saveCache(const Detail::DeviceMeasurements &dm);
+
+
   const size_t dwarf_bench_iterations_ = 10;
-  const std::vector<size_t> dwarf_bench_input_sizes_ = {256, 512, 1024, 2048};
+  const std::vector<size_t> dwarf_bench_input_sizes_ = {50'000'000, 70'000'000, 80'000'000};
+// const std::vector<size_t> dwarf_bench_input_sizes_ = {50'000, 70'000, 80'000};
 
   std::vector<Detail::Measurement> measureTemplateOnDevice(ExecutorDeviceType device,
                                                            AnalyticalTemplate templ);
 
   struct PrivateImpl;
   std::unique_ptr<PrivateImpl> pimpl_;
+
+  std::string cachePath = "/home/bagrorg/.cache/dwarfs/data";
 };
 
 }  // namespace costmodel

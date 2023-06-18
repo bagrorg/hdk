@@ -1,0 +1,36 @@
+/snap/clion/234/bin/cmake/linux/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/snap/clion/234/bin/ninja/linux/x64/ninja -DCMAKE_PREFIX_PATH=/home/bagrorg/anaconda3/envs/omnisci-dev -DENABLE_CUDA=on -DENABLE_DWARF_BENCH=on -G Ninja -S /home/bagrorg/Documents/thesis/hdk -B /home/bagrorg/Documents/thesis/hdk/cmake-build-debug
+-- The C compiler identification is GNU 11.3.0
+-- The CXX compiler identification is GNU 11.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Git: /usr/bin/git (found version "2.34.1") 
+-- Boost 1.78.0 found.
+-- Found folly: /home/bagrorg/anaconda3/envs/omnisci-dev
+-- Found SQLite3: /home/bagrorg/anaconda3/envs/omnisci-dev/include (found version "3.40.0") 
+-- Found Arrow: /home/bagrorg/anaconda3/envs/omnisci-dev/lib/libarrow.so  
+-- Found Parquet: /home/bagrorg/anaconda3/envs/omnisci-dev/lib/libparquet.so  
+-- Boost 1.78.0 found.
+-- Dwarf Bench enabled
+-- The CUDA compiler identification is unknown
+CMake Error at /snap/clion/234/bin/cmake/linux/x64/share/cmake-3.25/Modules/CMakeDetermineCUDACompiler.cmake:603 (message):
+  Failed to detect a default CUDA architecture.
+
+  
+
+  Compiler output:
+
+Call Stack (most recent call first):
+  CMakeLists.txt:167 (enable_language)
+
+
+-- Configuring incomplete, errors occurred!
+See also "/home/bagrorg/Documents/thesis/hdk/cmake-build-debug/CMakeFiles/CMakeOutput.log".
+See also "/home/bagrorg/Documents/thesis/hdk/cmake-build-debug/CMakeFiles/CMakeError.log".

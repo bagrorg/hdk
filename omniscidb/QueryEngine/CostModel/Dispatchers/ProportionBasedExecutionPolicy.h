@@ -30,7 +30,9 @@ class ProportionBasedExecutionPolicy : public ExecutionPolicy {
                                               size_t frag_num) const override;
 
   std::string name() const override { return "ExecutionPolicy::ProportionBased"; };
-
+  std::pair<unsigned, unsigned> getProps() {
+    return {proportion_[ExecutorDeviceType::CPU], proportion_[ExecutorDeviceType::GPU]};
+  }
  private:
   std::map<ExecutorDeviceType, unsigned> proportion_;
   unsigned total_parts_;

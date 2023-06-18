@@ -109,6 +109,10 @@ struct ExecutionConfig {
   std::string initialize_with_gpu_vendor = "";
 
   bool enable_cost_model = false;
+  size_t abs;
+  bool enable_interesting_data = false;
+
+  std::string priv_data = "";
 };
 
 struct FilterPushdownConfig {

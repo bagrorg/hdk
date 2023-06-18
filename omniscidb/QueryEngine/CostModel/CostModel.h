@@ -32,6 +32,7 @@ struct CaibrationConfig {
 struct QueryInfo {
   std::vector<AnalyticalTemplate> templs;
   size_t bytes_size;
+  float step = 0.0;
 };
 
 struct CostModelConfig {

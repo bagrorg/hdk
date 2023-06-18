@@ -19,6 +19,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 
 namespace costmodel {
 
@@ -85,6 +86,14 @@ Detail::DeviceMeasurements DwarfBenchDataSource::getMeasurements(
     const std::vector<ExecutorDeviceType>& devices,
     const std::vector<AnalyticalTemplate>& templates) {
   Detail::DeviceMeasurements dm;
+
+  namespace fs = std::filesystem;
+
+  if (fs::exists(fs::path(cachePath))) {
+    dm = readCache();
+    return dm;
+  }
+
   for (AnalyticalTemplate templ : templates) {
     CHECK(isTemplateSupported(templ));
     for (ExecutorDeviceType device : devices) {
@@ -92,6 +101,55 @@ Detail::DeviceMeasurements DwarfBenchDataSource::getMeasurements(
 
       dm[device][templ] = measureTemplateOnDevice(device, templ);
     }
+  }
+
+  saveCache(dm);
+
+  return dm;
+}
+
+void DwarfBenchDataSource::saveCache(const Detail::DeviceMeasurements &dm) {
+  std::ofstream out(cachePath);
+  LOG(DEBUG1) << "BAGRORG: Saving to file " << out.good() << ' ' << out.fail() << ' ' << out.bad() << ' ' << cachePath;
+  
+
+  for (auto &[device, mss]: dm) {
+    for (auto &[temp, ms]: mss) {
+      for (const Detail::Measurement &m: ms) {
+        out << (device == ExecutorDeviceType::CPU ? "CPU" : "GPU") << "|" << toString(temp) << "|" << m.bytes << "|" << m.milliseconds << std::endl;
+      }
+    }
+  }
+}
+
+Detail::DeviceMeasurements DwarfBenchDataSource::readCache() {
+  std::ifstream in(cachePath);
+  std::string line;
+  Detail::DeviceMeasurements dm;
+
+  while (std::getline(in, line)) {
+    std::vector<std::string> strs;
+    boost::split(strs,line,boost::is_any_of("|"));
+
+    ExecutorDeviceType dev;
+    AnalyticalTemplate temp;
+    Detail::Measurement m;
+
+    if (strs[0] == "CPU") dev = ExecutorDeviceType::CPU;
+    if (strs[0] == "GPU") dev = ExecutorDeviceType::GPU;
+
+    if (strs[1] == "Join"   ) temp = AnalyticalTemplate::Join;
+    if (strs[1] == "GroupBy") temp = AnalyticalTemplate::GroupBy;
+    if (strs[1] == "Scan"   ) temp = AnalyticalTemplate::Scan;
+    if (strs[1] == "Reduce" ) temp = AnalyticalTemplate::Reduce;
+    if (strs[1] == "Sort"   ) temp = AnalyticalTemplate::Sort;
+
+    m = {
+      .bytes = std::stoull(strs[2]),
+      .milliseconds = std::stoull(strs[3])
+    };
+
+    dm[dev][temp].push_back(m);
   }
 
   return dm;

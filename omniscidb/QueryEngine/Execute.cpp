@@ -78,6 +78,7 @@
 #include "ThirdParty/robin_hood.h"
 
 #include "CostModel/IterativeCostModel.h"
+#include "CostModel/DataSources/InterestingDataSource.h"
 
 using namespace std::string_literals;
 
@@ -175,8 +176,13 @@ Executor::Executor(const ExecutorId executor_id,
 
   if (config_->exec.enable_cost_model) {
     try {
-      cost_model = std::make_shared<costmodel::IterativeCostModel>();
-      cost_model->calibrate({{ExecutorDeviceType::CPU, ExecutorDeviceType::GPU}});
+      if (config_->exec.enable_interesting_data) {
+        cost_model = std::make_shared<costmodel::IterativeCostModel>(costmodel::CostModelConfig{std::make_unique<costmodel::InterestingDataSource>(config_->exec.abs)});
+        cost_model->calibrate({{ExecutorDeviceType::CPU, ExecutorDeviceType::GPU}});
+      } else {
+        cost_model = std::make_shared<costmodel::IterativeCostModel>();
+        cost_model->calibrate({{ExecutorDeviceType::CPU, ExecutorDeviceType::GPU}});
+      }
     } catch (costmodel::CostModelException& e) {
       LOG(DEBUG1) << "Cost model will be disabled due to creation error: " << e.what();
     }
@@ -1734,7 +1740,8 @@ std::shared_ptr<StreamExecutionContext> Executor::prepareStreamingExecution(
                                                         ra_exe_unit,
                                                         query_infos,
                                                         *column_fetcher,
-                                                        {device_type,
+                                                        {co.step,
+                                                          device_type,
                                                          co.hoist_literals,
                                                          co.opt_level,
                                                          co.with_dynamic_watchdog,
@@ -1845,7 +1852,8 @@ std::pair<std::unique_ptr<policy::ExecutionPolicy>, ExecutorDeviceType>
 Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
                                        const ExecutorDeviceType requested_device_type,
                                        const std::vector<InputTableInfo>& query_infos,
-                                       size_t& max_groups_buffer_entry_guess) {
+                                       size_t& max_groups_buffer_entry_guess,
+                                       float step) {
   if (needFallbackOnCPU(ra_exe_unit, requested_device_type)) {
     LOG(DEBUG1) << "Devices Restricted, falling back on CPU";
     return {std::make_unique<policy::FragmentIDAssignmentExecutionPolicy>(
@@ -1884,10 +1892,16 @@ Executor::getExecutionPolicyForTargets(const RelAlgExecutionUnit& ra_exe_unit,
     LOG(DEBUG1) << "Cost Model enabled, making prediction for templates "
                 << toString(ra_exe_unit.templs) << " for size " << bytes;
 
-    costmodel::QueryInfo qi = {ra_exe_unit.templs, bytes};
+    costmodel::QueryInfo qi = {ra_exe_unit.templs, bytes, step};
+    LOG(DEBUG1) << "BAGRORG: Using step " << step;
 
     try {
       exe_policy = ra_exe_unit.cost_model->predict(qi);
+      if (auto ptr = dynamic_cast<policy::ProportionBasedExecutionPolicy*>(exe_policy.get())) {
+        auto [cpu, gpu] = ptr->getProps();
+        LOG(DEBUG1) << "BAGRORG: " << config_->exec.priv_data;
+        LOG(DEBUG1) << "BAGRORG: GOT PROPORTION CPU=" << cpu << ", GPU=" << gpu;
+      }
       return {std::move(exe_policy), requested_device_type};
     } catch (costmodel::CostModelException& e) {
       LOG(DEBUG1) << "Cost model got an exception: " << e.what();
@@ -1933,7 +1947,7 @@ hdk::ResultSetTable Executor::executeWorkUnitImpl(
     ColumnCacheMap& column_cache) {
   INJECT_TIMER(Exec_executeWorkUnit);
   auto [exe_policy, fallback_device] = getExecutionPolicyForTargets(
-      ra_exe_unit, co.device_type, query_infos, max_groups_buffer_entry_guess);
+      ra_exe_unit, co.device_type, query_infos, max_groups_buffer_entry_guess, co.step);
 
   int8_t crt_min_byte_width{MAX_BYTE_WIDTH_SUPPORTED};
   do {
@@ -1961,7 +1975,8 @@ hdk::ResultSetTable Executor::executeWorkUnitImpl(
                                              ra_exe_unit,
                                              query_infos,
                                              column_fetcher,
-                                             {dt,
+                                             {co.step,
+                                              dt,
                                               co.hoist_literals,
                                               co.opt_level,
                                               co.with_dynamic_watchdog,

@@ -556,7 +556,7 @@ ResultSetReductionJIT::ResultSetReductionJIT(const QueryMemoryDescriptor& query_
 
 ReductionCode ResultSetReductionJIT::codegen() const {
   const auto hash_type = query_mem_desc_.getQueryDescriptionType();
-  CompilationOptions co{
+  CompilationOptions co{228.0,
       ExecutorDeviceType::CPU, false, ExecutorOptLevel::ReductionJIT, false};
 
   co.codegen_traits_desc = co.getCgenTraitsDesc(ExecutorDeviceType::CPU);
@@ -1262,7 +1262,7 @@ void ResultSetReductionJIT::finalizeReductionCode(
     const llvm::Function* ir_reduce_one_entry,
     const llvm::Function* ir_reduce_one_entry_idx,
     const CodeCacheKey& key) const {
-  CompilationOptions co{
+  CompilationOptions co{228.0,
       ExecutorDeviceType::CPU, false, ExecutorOptLevel::ReductionJIT, false};
 #ifdef NDEBUG
   LOG(IR) << "Reduction Loop:\n"
